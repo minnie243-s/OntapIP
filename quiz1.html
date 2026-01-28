@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Style cho hình ảnh câu hỏi */
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; /* Mặc định ẩn */
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start; /* Canh lề trên để icon không bị lệch nếu text dài */
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px; /* Căn chỉnh với dòng text đầu tiên */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        /* Single Select (Radio) */
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        /* Multi Select (Checkbox) */
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        /* Feedback colors */
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Kết quả */
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" onclick="location.reload()">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI CỦA BẠN ---
+    const quizData = [
+
+/* ================= STATIC ROUTING ================= */
+
+{
+    question: "Hệ thống mạng giả lập có kiến trúc và các địa chỉ IP như hình vẽ. Để ping được từ máy A đến máy X, mức độ tối thiểu cần thêm vào các bảng routing trên từng router như thế nào?",
+    hasImage: true,
+    imgSrc: "images/1.1.jpg",
+    options: [
+        "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.1.0",
+        "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.2.0",
+        "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.3.0",
+        "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.1.0",
+        "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.2.0",
+        "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.3.0",
+        "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.1.0",
+        "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.2.0",
+        "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.3.0"
+    ],
+    correct: [2, 5, 6],
+    note: "Cần đảm bảo router biết đường đến mạng đích và đường quay về mạng nguồn."
+},
+
+{
+    question: "Để các trạm A và B kết nối được Internet thì bắt buộc cần cấu hình R1 là default gateway của mạng 192.168.1.0/24.",
+    hasImage: true,
+    imgSrc: "images/1.1.jpg",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Không bắt buộc, các router trung gian có thể định tuyến bằng route cụ thể."
+},
+
+
+{
+    question: "Thiết lập default gateway cho các trạm và các router trong hệ thống như thế nào là đúng?",
+    hasImage: true,
+    imgSrc: "images/1.1.jpg",
+    options: [
+        "Máy A và B có default gateway là R1",
+        "Router R2 có default gateway là R1",
+        "Router R3 có default gateway là R1",
+        "Máy X có default gateway là R1"
+    ],
+    correct: [0, 1],
+    note: "Máy X và R3 sử dụng route cụ thể, không cần default gateway."
+},
+
+{
+    question: "Xét bảng routing của router R1. Những nhận định nào sau đây là đúng?",
+    hasImage: true,
+    imgSrc: "images/1.1.jpg",
+    options: [
+        "Bảng routing của R1 có prefix LAN1 (192.168.1.0/24) với next hop là R1",
+        "Bảng routing của R1 có prefix mạng NAT (10.0.2.0/24) với next hop là máy host",
+        "Bảng routing của R1 có prefix LAN2 (192.168.2.0/24) với next hop là R2",
+        "Bảng routing của R1 có prefix LAN3 (192.168.3.0/24) với next hop là R3",
+        "Bảng routing của R1 có prefix LAN3 (192.168.3.0/24) với next hop là R2"
+    ],
+    correct: [2, 4],
+    note: "R1 đi đến LAN3 thông qua R2."
+},
+
+{
+    question: "Triển khai tracepath trong môi trường thực hành. Những nhận định nào sau đây là đúng?",
+    hasImage: true,
+    imgSrc: "images/1.2.jpg",
+    options: [
+        "Máy A chạy tracepath đến Google thì hop đầu tiên là default gateway của máy A",
+        "Máy X chạy tracepath đến Google thì hop đầu tiên là router R1",
+        "Máy A chạy tracepath đến máy X thì hop đầu tiên là router R1",
+        "Máy A chạy tracepath đến máy X thì hop đầu tiên là router R2"
+    ],
+    correct: [0, 2],
+    note: "Hop đầu tiên luôn là gateway trực tiếp của máy gửi."
+},
+
+/* ================= ICMP ================= */
+
+{
+    question: "Xét sơ đồ ICMP Redirect sau. Những nhận định nào sau đây là đúng?",
+    hasImage: true,
+    imgSrc: "images/1.2.jpg",
+    options: [
+        "Quá trình routing vòng vẫn tiếp diễn nhưng gói tin vẫn gửi đến đích",
+        "Gói tin trả lời từ Network X về Host đi qua G2 rồi vòng qua G1",
+        "Máy Host gửi gói tin đến Network X phải chuyển tiếp qua G1 vì G1 là default gateway",
+        "G1 xác định next hop là G2 vì nó được khai báo trong bảng routing của G1"
+    ],
+    correct: [0, 2, 3],
+    note: "ICMP Redirect chỉ tối ưu đường đi cho host."
+},
+
+{
+    question: "Trong thông báo ICMP Redirect, giá trị a.b.c.d là 10.0.0.1.",
+    hasImage: true,
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "a.b.c.d là địa chỉ gateway tốt hơn (G2)."
+},
+
+{
+    question: "Gói tin số 1 trong hình vẽ là ICMP Echo Request có địa chỉ nguồn là 10.0.0.100 và đích là 203.162.0.11.",
+    hasImage: true,
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+{
+    question: "Các địa chỉ IP và dữ liệu trong gói tin số 4 và gói tin số 1 là giống nhau.",
+    hasImage: true,
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+{
+    question: "Gói tin ICMP Echo Reply không được thể hiện trên hình vẽ.",
+    hasImage: true,
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+{
+    question: "ICMP Redirect thông báo đang có hiện tượng routing đi vòng. Để loại bỏ tình huống này, cần thêm mộtgateway nữa vào routing table của máy Host.",
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+/* ================= IP CƠ BẢN ================= */
+
+{
+    question: "Tên đầy đủ của địa chỉ IP là gì?",
+    options: [
+        "Internet Provider address",
+        "Internet Processing address",
+        "Internet Protocol address",
+        "None of the above"
+    ],
+    correct: 2
+},
+
+{
+    question: "Địa chỉ mạng (net ID) của một máy tính có địa chỉ IP 192.168.242.5/20 là gì?",
+    options: [
+        "192.168.242.2",
+        "192.168.240.5",
+        "192.168.240.0",
+        "192.168.241.1"
+    ],
+    correct: 2
+},
+
+{
+    question: "Cú pháp /28 trong địa chỉ IP nói lên điều gì?",
+    options: [
+        "Số lượng bit trong phần host ID",
+        "Số lượng máy trạm trong mạng",
+        "Số lượng bit trong phần network ID",
+        "Không có đáp án nào đúng"
+    ],
+    correct: 2
+},
+
+{
+    question: "Unicast là một phương pháp truyền tin.",
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+{
+    question: "Địa chỉ broadcast của một network có máy trạm 192.168.242.5/20 là gì?",
+    options: [
+        "192.168.250.250",
+        "192.168.251.251",
+        "192.168.255.255",
+        "192.168.250.251"
+    ],
+    correct: 2
+},
+
+{
+    question: "Mạng có network mask 255.255.240.0 thì chứa bao nhiêu máy trạm?",
+    options: [
+        "100",
+        "256",
+        "4094",
+        "192.168.250.252"
+    ],
+    correct: 2
+},
+
+{
+    question: "Hai địa chỉ IP 152.16.168.196/28 và 162.16.168.30 có nằm trong cùng một mạng không?",
+    options: ["Yes", "No"],
+    correct: 1
+},
+
+/* ================= CLASSLESS ROUTING ================= */
+
+{
+    question: "Thực hiện ping từ H1 đến H2, R1 kiểm tra thấy có thể sử dụng những luật nào trong routing table đểchuyển tiếp gói tin",
+    hasImage: true,
+    imgSrc: "images/1.3.jpg",
+    options: [
+        "192.168.0.0/16 >> R2",
+        "192.168.128.0/24 >> R2",
+        "192.168.128.100/25 >> R2",
+        "192.168.128.200/25 >> R2",
+        "192.168.128.64/26 >> R2"
+    ],
+    correct: [0, 1, 2, 4],
+    note: "Nguyên tắc longest prefix match."
+},
+
+{
+    question: "Thực hiện ping từ H1 đến H2, R1 sử dụng luật nào trong routing table để chuyển tiếp gói tin?",
+    hasImage: true,
+    imgSrc: "images/1.3.jpg",
+    options: [
+        "192.168.0.0/16 >> R2",
+        "192.168.128.0/24 >> R2",
+        "192.168.128.100/25 >> R2",
+        "192.168.128.200/25 >> R2",
+        "192.168.128.64/26 >> R2"
+    ],
+    correct: 4,
+    note: "Luật có prefix dài nhất được ưu tiên."
+},
+
+{
+    question: "Chạy ping từ H1 đến H2, bắt các gói tin IP trên kênh truyền từ R1 đến R2, những nhận định sau cái nào đúng",
+    hasImage: true,
+    imgSrc: "images/1.4.jpg",
+    options: [
+        "Gói tin IP có địa chỉ nguồn là 192.169.1.100 và đích là 192.168.1.10",
+        "Gói tin IP có địa chỉ mạng nguồn là 192.169.1.0/24 và mạng đích là 192.168.1.0/24",
+        "Gói tin IP có địa chỉ mạng nguồn là 192.169.1.0/24 và mạng đích là 192.168.1.0/25",
+        "Gói tin IP chứa thông tin netmask /25 để báo cho router cách lấy địa chỉ mạng"
+    ],
+    correct: 0,
+    note: "Netmask không được mang theo trong gói IP."
+},
+
+{
+    question: "Để tối ưu bảng routing tại R2, 2 luật trên có thể được gộp bằng 1 luật \"gộp\". Những luật nào sau đây có thể sử dụng làm luật \"gộp\"?",
+    hasImage: true,
+    imgSrc: "images/1.3.jpg",
+    options: [
+        "192.168.0.0/16 >> R3",
+        "192.168.128.0/24 >> R3",
+        "192.168.128.100/25 >> R3",
+        "192.168.128.200/25 >> R3"
+    ],
+    correct: [1, 2],
+    note: "Hai dải /25 liên tiếp gộp thành /24."
+},
+
+{
+    question: "Nhận định nào sau đây là đúng?",
+    hasImage: true,
+    imgSrc: "images/1.4.jpg",
+    options: [
+        "R1 và R2 cùng vận hành routing theo cơ chế classful",
+        "R1 và R2 cùng vận hành routing theo cơ chế classless",
+        "R1 chạy classful routing, R2 chạy classless routing",
+        "R1 chạy classless routing, R2 chạy classful routing"
+    ],
+    correct: 1,
+    note: "Hệ thống sử dụng VLSM nên là classless."
+}
+
+];
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        // Update Header Info
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb'; // Đỏ nếu multi, Xanh nếu single
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // --- XỬ LÝ HÌNH ẢNH (MỚI) ---
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            
+            // Nếu có đường dẫn ảnh (imgSrc) thì dùng, nếu không thì dùng ảnh giữ chỗ
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+            
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            
+            // Sắp xếp lại để so sánh dễ hơn (tùy chọn)
+            selectedAnswers.sort((a, b) => a - b);
+            
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        // Disable clicks
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            // Logic so sánh 2 mảng: Mảng chọn vs Mảng đúng
+            // Phải chọn ĐỦ và ĐÚNG mới được tính điểm (Strict mode)
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            
+            // So sánh độ dài và từng phần tử
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            // Tô màu
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    // Nếu là đáp án đúng
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct'); // Chọn đúng
+                    else allOpts[i].classList.add('missed'); // Thiếu
+                } else {
+                    // Nếu là đáp án sai
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong'); // Chọn nhầm
+                }
+            }
+        } else {
+            // Single choice
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // Start
+    loadQuestion();
+</script>
+
+</body>
+</html>

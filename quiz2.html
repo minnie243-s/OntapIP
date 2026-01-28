@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập Mạng Máy Tính (Routing - ICMP - IP)</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Style cho hình ảnh câu hỏi */
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; /* Mặc định ẩn */
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start; /* Canh lề trên để icon không bị lệch nếu text dài */
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px; /* Căn chỉnh với dòng text đầu tiên */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        /* Single Select (Radio) */
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        /* Multi Select (Checkbox) */
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        /* Feedback colors */
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Kết quả */
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập Mạng Máy Tính</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" onclick="location.reload()">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI CỦA BẠN ---
+const quizData = [
+
+/* ================= RIP – CƠ BẢN ================= */
+
+{
+    question: "Sử dụng môi trường giả lập mạng, bắt gói tin ICMP giữa các router trong quá trình phát hiện router láng giềng sử dụng giao thức RIPv2. Những nhận định nào sau đây là đúng?",
+    hasImage: true,
+    options: [
+        "ICMP được gửi unicast giữa các router khi trả lời trực tiếp đến một router",
+        "ICMP được gửi đến địa chỉ 224.0.0.9 khi router muốn tìm kiếm router láng giềng",
+        "ICMP được gửi broadcast giữa các router khi router muốn quảng bá sự có mặt của mình",
+        "ICMP được gửi multicast giữa các router khi router muốn tìm kiếm router láng giềng"
+    ],
+    correct: 0,
+    note: "RIPv2 sử dụng multicast 224.0.0.9, không dùng broadcast."
+},
+
+{
+    question: "Khi một kết nối mạng giữa hai router RIP bị đứt, các router sẽ loan báo và cập nhật bảng routing như thế nào?",
+    options: [
+        "Router tự động phát hiện và cập nhật bảng routing tức thời",
+        "Quản trị mạng phải cấu hình lại router để thông báo lỗi",
+        "Router tự động (sau một khoảng thời gian định kỳ) lan truyền cập nhật bảng routing và cập nhật tình trạng kết nối lỗi",
+        "Router luôn lan truyền bảng routing định kỳ kể cả khi không có lỗi"
+    ],
+    correct: [2, 3],
+    note: "RIP cập nhật định kỳ và hội tụ sau một khoảng thời gian."
+},
+
+/* ================= RIP – METRIC & RTE ================= */
+
+{
+    question: "Xét sơ đồ mạng Rx–R1–R2–R3 (có hình ảnh). Router Rx thấy có hai RTE với metric lần lượt là 4 và 5. Những nhận định nào sau đây là đúng khi các router trao đổi RTE từ router láng giềng?",
+    hasImage: true,
+    options: [
+        "Rx nhận từ R1: (prefix #1, metric: 3)",
+        "Rx nhận từ R2: (prefix #1, metric: 0)",
+        "Rx nhận từ R3: (prefix #2, metric: 0)",
+        "Rx nhận từ R2: (prefix #2, metric: 1)",
+        "Rx nhận từ R1: (prefix #1, metric: 3)",
+        "Rx nhận từ R2: (prefix #2, metric: 4)"  
+    ],
+    correct: [0, 1, 3],
+    note: "RIP là distance vector, metric là số hop."
+},
+
+{
+    question: "Trong giao thức RIP, quá trình router xác định router láng giềng thì gói tin nào được sử dụng?",
+    options: [
+        "RIP Hello",
+        "ICMP Hello",
+        "ICMP Solicitation",
+        "ICMP Advertisement"
+    ],
+    correct: 3,
+    note: "RIP sử dụng message dạng request/response (advertisement)."
+},
+
+{
+    question: "Mục tiêu của giao thức RIP là giúp router xác định tất cả các đường đi và tính khoảng cách đến mạng đích. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "RIP không tìm tất cả đường đi, chỉ tìm đường đi tốt nhất dựa trên metric."
+},
+
+/* ================= RIP – TÍNH METRIC ================= */
+
+{
+    question: "Xét các thông tin RTE Rx và R1 nhận được từ các router láng giềng (có hình ảnh). Những RTE nào Rx nhận được là đúng?",
+    hasImage: true,
+    options: [
+        "Rx nhận (prefix #1, metric: 3)",
+        "Rx nhận (prefix #2, metric: 4)",
+        "Rx nhận (prefix #1, metric: 4)",
+        "Rx nhận (prefix #2, metric: 5)"
+    ],
+    correct: [0, 1],
+    note: "Metric được cộng thêm 1 khi truyền qua mỗi router."
+},
+
+/* ================= RIP – SUY LUẬN SỐ ROUTER ================= */
+
+{
+    question: "Xét hệ thống backbone R1–R–…–R2–R3 (có hình ảnh). Dựa vào metric tại các router, số lượng router R nằm giữa R1 và R2 là bao nhiêu?",
+    hasImage: true,
+    options: ["6", "7", "8", "9"],
+    correct: 2,
+    note: "Hiệu metric phản ánh số router trung gian."
+},
+
+{
+    question: "Xét hệ thống mạng có nhiều nhánh (có hình ảnh). Dựa trên metric trong data-plane, số router R nằm giữa R1 và R2 là bao nhiêu?",
+    hasImage: true,
+    options: ["2", "3", "4", "5"],
+    correct: 1
+},
+
+/* ================= RIP – CẤU HÌNH ================= */
+
+{
+    question: "Trong cấu hình RIP, khai báo network có những tác dụng gì?",
+    options: [
+        "Thông báo cho các router khác về một network trong hệ thống",
+        "Kết nối router vào network này",
+        "Kích hoạt kết nối mạng này để quảng bá bằng RIP",
+        "Tìm kiếm router láng giềng trên local link ứng với network"
+    ],
+    correct: [0, 2, 3],
+    note: "Lệnh network dùng để enable RIP trên interface."
+},
+
+/* ================= CONTROL PLANE vs DATA PLANE ================= */
+
+{
+    question: "So sánh routing protocol và routed protocol: routing protocol dùng cho Control Plane, routed protocol dùng cho Data Plane. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
+
+/* ================= RIP – MESSAGE & METRIC ================= */
+
+{
+    question: "Xét các RIP message trong hệ thống (có hình ảnh). Giá trị metric '???' trong message RIP số 2 mà R1 nhận được là bao nhiêu?",
+    hasImage: true,
+    options: ["2", "3", "4", "5"],
+    correct: 1,
+    note: "Metric được cộng thêm 1 khi truyền từ router láng giềng."
+},
+
+/* ================= RIP – DISTANCE VECTOR ================= */
+
+{
+    question: "Giao thức RIP được gọi là distance vector vì router tính đường đi bằng thuật toán Dijkstra.",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "RIP dùng Bellman-Ford, không phải Dijkstra."
+},
+
+/* ================= RIP – CONTROL PLANE → DATA PLANE ================= */
+
+{
+    question: "Trong giao thức RIP, router đưa một RTE từ Control Plane sang Data Plane vào thời điểm nào?",
+    options: [
+        "Mỗi khi router nhận được gói tin RIP",
+        "Mỗi khi router nhận được gói tin IP",
+        "Khi giá trị metric được cập nhật trong Control Plane",
+        "Khi giá trị metric được cập nhật trong Data Plane"
+    ],
+    correct: 2,
+    note: "Control Plane tính toán xong mới cập nhật Data Plane."
+},
+
+{
+    question: "Trong giao thức RIP, khi nhận được yêu cầu tìm kiếm router láng giềng, router trả lời bằng gói tin nào?",
+    options: [
+        "RIP Reply",
+        "ICMP Reply",
+        "ICMP Advertisement",
+        "ICMP Solicitation"
+    ],
+    correct: 0
+}
+
+];
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        // Update Header Info
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb'; // Đỏ nếu multi, Xanh nếu single
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // --- XỬ LÝ HÌNH ẢNH (MỚI) ---
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            
+            // Nếu có đường dẫn ảnh (imgSrc) thì dùng, nếu không thì dùng ảnh giữ chỗ
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+            
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            
+            // Sắp xếp lại để so sánh dễ hơn (tùy chọn)
+            selectedAnswers.sort((a, b) => a - b);
+            
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        // Disable clicks
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            // Logic so sánh 2 mảng: Mảng chọn vs Mảng đúng
+            // Phải chọn ĐỦ và ĐÚNG mới được tính điểm (Strict mode)
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            
+            // So sánh độ dài và từng phần tử
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            // Tô màu
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    // Nếu là đáp án đúng
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct'); // Chọn đúng
+                    else allOpts[i].classList.add('missed'); // Thiếu
+                } else {
+                    // Nếu là đáp án sai
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong'); // Chọn nhầm
+                }
+            }
+        } else {
+            // Single choice
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // Start
+    loadQuestion();
+</script>
+
+</body>
+</html>
