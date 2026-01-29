@@ -257,284 +257,239 @@
 
 <script>
     // --- DỮ LIỆU CÂU HỎI ---
-    const quizData = [
+const quizData = [
 
-    /* ================= STATIC ROUTING ================= */
+/* ================= OSPF HELLO ================= */
 
-    {
-        question: "Hệ thống mạng giả lập có kiến trúc và các địa chỉ IP như hình vẽ. Để ping được từ máy A đến máy X, mức độ tối thiểu cần thêm vào các bảng routing trên từng router như thế nào?",
-        hasImage: true,
-        imgSrc: "images/1.1.jpg",
-        options: [
-            "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.1.0",
-            "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.2.0",
-            "Thêm vào bảng routing của R1 đường đi đến mạng 192.168.3.0",
-            "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.1.0",
-            "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.2.0",
-            "Thêm vào bảng routing của R2 đường đi đến mạng 192.168.3.0",
-            "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.1.0",
-            "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.2.0",
-            "Thêm vào bảng routing của R3 đường đi đến mạng 192.168.3.0"
-        ],
-        correct: [2, 5, 6],
-        note: "Cần đảm bảo router biết đường đến mạng đích và đường quay về mạng nguồn."
-    },
+{
+    question: "Router láng giềng của router 192.168.1.1 có địa chỉ IP là gì?",
+    hasImage: true,
+    imgSrc: "images/3.1.jpg",
+    options: [
+        "192.168.1.1",
+        "192.168.1.2",
+        "224.0.0.5",
+        "2.2.2.2"
+    ],
+    correct: 1
+},
 
-    {
-        question: "Để các trạm A và B kết nối được Internet thì bắt buộc cần cấu hình R1 là default gateway của mạng 192.168.1.0/24.",
-        hasImage: true,
-        imgSrc: "images/1.1.jpg",
-        options: ["Đúng", "Sai"],
-        correct: 1,
-        note: "Không bắt buộc, các router trung gian có thể định tuyến bằng route cụ thể."
-    },
+{
+    question: "Router láng giềng của router 192.168.1.1 có Router-ID là gì?",
+    hasImage: true,
+    imgSrc: "images/3.1.jpg",
+    options: [
+        "1.1.1.1",
+        "2.2.2.2",
+        "192.168.1.1",
+        "192.168.1.2"
+    ],
+    correct: 1
+},
 
+{
+    question: "Các router láng giềng trao đổi với nhau bằng phương pháp multicast theo địa chỉ:",
+    hasImage: true,
+    imgSrc: "images/3.1.jpg",
+    options: [
+        "224.0.0.1",
+        "224.0.0.2",
+        "224.0.0.5",
+        "224.0.0.6"
+    ],
+    correct: 2
+},
 
-    {
-        question: "Thiết lập default gateway cho các trạm và các router trong hệ thống như thế nào là đúng?",
-        hasImage: true,
-        imgSrc: "images/1.1.jpg",
-        options: [
-            "Máy A và B có default gateway là R1",
-            "Router R2 có default gateway là R1",
-            "Router R3 có default gateway là R1",
-            "Máy X có default gateway là R1"
-        ],
-        correct: [0, 1],
-        note: "Máy X và R3 sử dụng route cụ thể, không cần default gateway."
-    },
+{
+    question: "Để giám sát trạng thái kết nối giữa hai router OSPF trong cùng mạng broadcast, hệ thống sẽ có những LSA nào?",
+    hasImage: true,
+    imgSrc: "images/3.1.jpg",
+    options: [
+        "1 router-LSA",
+        "2 router-LSA",
+        "1 network-LSA",
+        "2 network-LSA"
+    ],
+    correct: 1,
+    note: "Mỗi router sinh một router-LSA."
+},
 
-    {
-        question: "Xét bảng routing của router R1. Những nhận định nào sau đây là đúng?",
-        hasImage: true,
-        imgSrc: "images/1.1.jpg",
-        options: [
-            "Bảng routing của R1 có prefix LAN1 (192.168.1.0/24) với next hop là R1",
-            "Bảng routing của R1 có prefix mạng NAT (10.0.2.0/24) với next hop là máy host",
-            "Bảng routing của R1 có prefix LAN2 (192.168.2.0/24) với next hop là R2",
-            "Bảng routing của R1 có prefix LAN3 (192.168.3.0/24) với next hop là R3",
-            "Bảng routing của R1 có prefix LAN3 (192.168.3.0/24) với next hop là R2"
-        ],
-        correct: [2, 4],
-        note: "R1 đi đến LAN3 thông qua R2."
-    },
+/* ================= OSPF DATABASE ================= */
 
-    {
-        question: "Triển khai tracepath trong môi trường thực hành. Những nhận định nào sau đây là đúng?",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: [
-            "Máy A chạy tracepath đến Google thì hop đầu tiên là default gateway của máy A",
-            "Máy X chạy tracepath đến Google thì hop đầu tiên là router R1",
-            "Máy A chạy tracepath đến máy X thì hop đầu tiên là router R1",
-            "Máy A chạy tracepath đến máy X thì hop đầu tiên là router R2"
-        ],
-        correct: [0, 2],
-        note: "Hop đầu tiên luôn là gateway trực tiếp của máy gửi."
-    },
+{
+    question: "Hệ thống có bao nhiêu router?",
+    hasImage: true,
+    imgSrc: "images/3.2.jpg",
+    options: ["2", "3", "4", "5"],
+    correct: 2
+},
 
-    /* ================= ICMP ================= */
+{
+    question: "Hệ thống có bao nhiêu mạng nghiệp vụ (business network)?",
+    hasImage: true,
+    imgSrc: "images/3.2.jpg",
+    options: ["1", "2", "3", "4"],
+    correct: 3
+},
 
-    {
-        question: "Xét sơ đồ ICMP Redirect sau. Những nhận định nào sau đây là đúng?",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: [
-            "Quá trình routing vòng vẫn tiếp diễn nhưng gói tin vẫn gửi đến đích",
-            "Gói tin trả lời từ Network X về Host đi qua G2 rồi vòng qua G1",
-            "Máy Host gửi gói tin đến Network X phải chuyển tiếp qua G1 vì G1 là default gateway",
-            "G1 xác định next hop là G2 vì nó được khai báo trong bảng routing của G1"
-        ],
-        correct: [0, 2, 3],
-        note: "ICMP Redirect chỉ tối ưu đường đi cho host."
-    },
+{
+    question: "Dựa vào OSPF database của router (có hình ảnh), các router kết nối với nhau theo mô hình nào?",
+    hasImage: true,
+    imgSrc: "images/3.2.jpg",
+    options: [
+        "Kết nối đôi một (point-to-point)",
+        "Tất cả router cùng nối vào một đường trục",
+        "Kết nối vòng",
+        "Không đủ thông tin để xác định"
+    ],
+    correct: 1
+},
 
-    {
-        question: "Trong thông báo ICMP Redirect, giá trị a.b.c.d là 10.0.0.1.",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: ["Đúng", "Sai"],
-        correct: 1,
-        note: "a.b.c.d là địa chỉ gateway tốt hơn (G2)."
-    },
+/* ================= OSPF – CƠ BẢN ================= */
 
-    {
-        question: "Gói tin số 1 trong hình vẽ là ICMP Echo Request có địa chỉ nguồn là 10.0.0.100 và đích là 203.162.0.11.",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: ["Đúng", "Sai"],
-        correct: 0
-    },
+{
+    question: "Mô hình OSPF single area giải quyết được nhược điểm cơ bản của mô hình RIP là các việc xác định đường đi tối ưu cho gói tin sẽ được cập nhật theo trạng thái đường truyền. Các gói tin không bị dồn theo một đường đi cố định dẫn đến nghẽn kết nối trong khi đường đi khác đang \"thông thoáng\".",
+    options: ["Đúng", "Sai"],
+    correct: 0
+},
 
-    {
-        question: "Các địa chỉ IP và dữ liệu trong gói tin số 4 và gói tin số 1 là giống nhau.",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: ["Đúng", "Sai"],
-        correct: 0
-    },
+{
+    question: "RIP sử dụng phương pháp định tuyến dựa trên khoảng cách (distance vector) trong khi OSPF sử dụng phương pháp định tuyến dựa trên trạng thái đường truyền (link state). Cả hai giao thức định tuyến này cùng hướng đến mục tiêu tự động xây dựng bảng routing dựa trên cơ chế router tự động xác định láng giềng bằng ICMP và lan tỏa các thông điệp RIP hoặc OSPF",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "OSPF không dùng ICMP để tìm láng giềng."
+},
 
-    {
-        question: "Gói tin ICMP Echo Reply không được thể hiện trên hình vẽ.",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: ["Đúng", "Sai"],
-        correct: 0
-    },
+{
+    question: "Địa chỉ IP nào được các router OSPF sử dụng để trao đổi LSA",
+    options: [
+        "224.0.0.1",
+        "224.0.0.5",
+        "224.0.0.2",
+        "224.0.1.5"
+    ],
+    correct: 1
+},
 
-    {
-        question: "ICMP Redirect thông báo đang có hiện tượng routing đi vòng. Để loại bỏ tình huống này, cần thêm mộtgateway nữa vào routing table của máy Host.",
-        hasImage: true,
-        imgSrc: "images/1.2.jpg",
-        options: ["Đúng", "Sai"],
-        imgSrc: "images/1.2.jpg",
-        correct: 0
-    },
+/* ================= OSPF – CƠ CHẾ ================= */
 
-    /* ================= IP CƠ BẢN ================= */
+{
+    question: "Hãy chọn nhận định đúng về giao thức OSPF.",
+    options: [
+        "OSPF sử dụng TCP để truyền dữ liệu",
+        "OSPF sử dụng UDP để truyền dữ liệu",
+        "OSPF sử dụng protocol number 89 và chạy trực tiếp trên IP",
+        "Không có câu nào đúng"
+    ],
+    correct: 3
+},
 
-    {
-        question: "Tên đầy đủ của địa chỉ IP là gì?",
-        options: [
-            "Internet Provider address",
-            "Internet Processing address",
-            "Internet Protocol address",
-            "None of the above"
-        ],
-        correct: 2
-    },
+{
+    question: "Giá trị nào (hoặc những giá trị nào) quyết định đến kết quả quá trình lựa chọn Designated Router tronggiao thức OSPF Hello??",
+    options: [
+        "IP Address",
+        "Router ID",
+        "Priority",
+        "Code version"
+    ],
+    correct: [1, 2],
+    note: "Ưu tiên DR dựa trên Priority, sau đó là Router-ID."
+},
 
-    {
-        question: "Địa chỉ mạng (net ID) của một máy tính có địa chỉ IP 192.168.242.5/20 là gì?",
-        options: [
-            "192.168.242.2",
-            "192.168.240.5",
-            "192.168.240.0",
-            "192.168.241.1"
-        ],
-        correct: 2
-    },
+{
+    question: "Giá trị cost của Link State tăng lên khi tốc độ đường truyền tăng lên. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Tốc độ càng cao thì cost càng thấp."
+},
 
-    {
-        question: "Cú pháp /28 trong địa chỉ IP nói lên điều gì?",
-        options: [
-            "Số lượng bit trong phần host ID",
-            "Số lượng máy trạm trong mạng",
-            "Số lượng bit trong phần network ID",
-            "Không có đáp án nào đúng"
-        ],
-        correct: 2
-    },
+{
+    question: "Để thiết lập cost của kết nối mạng trong cấu hình OSPF, trong môi trường thực hành, khai báo nào trong cấu hình interface của router cho phép thiết lập cost=1563?",
+    options: [
+        "bandwidth 64",
+        "ospf cost 1563",
+        "bandwidth 56",
+        "bandwidth 64k",
+        "bandwidth 56k"
+    ],
+    correct: [0, 1]
+},
 
-    {
-        question: "Unicast là một phương pháp truyền tin.",
-        options: ["Đúng", "Sai"],
-        correct: 0
-    },
+/* ================= OSPF – LSA LAN TRUYỀN ================= */
 
-    {
-        question: "Địa chỉ broadcast của một network có máy trạm 192.168.242.5/20 là gì?",
-        options: [
-            "192.168.250.250",
-            "192.168.251.251",
-            "192.168.255.255",
-            "192.168.250.251"
-        ],
-        correct: 2
-    },
+{
+    question: "Các LSA lan tỏa trong area bao gồm?",
+    hasImage: true,
+    imgSrc: "images/3.3.jpg",
+    options: [
+        "4 router-LSA",
+        "8 router-LSA",
+        "12 router-LSA",
+        "1 network-LSA",
+        "4 network-LSA",
+        "8 network-LSA"
+    ],
+    correct: [0, 4]
+},
 
-    {
-        question: "Mạng có network mask 255.255.240.0 thì chứa bao nhiêu máy trạm?",
-        options: [
-            "100",
-            "256",
-            "4094",
-            "192.168.250.252"
-        ],
-        correct: 2
-    },
+{
+    question: "Trong cùng hệ thống trên, khi đường kết nối R3–R4 bị giảm tốc độ còn 50%, các LSA nào được lan truyền?",
+    hasImage: true,
+    imgSrc: "images/3.3.jpg",
+    options: [
+        "1 router-LSA",
+        "2 router-LSA",
+        "1 network-LSA",
+        "2 network-LSA"
+    ],
+    correct: 0,
+    note: "Chỉ router có thay đổi trạng thái link sinh router-LSA mới."
+},
 
-    {
-        question: "Hai địa chỉ IP 152.16.168.196/28 và 162.16.168.30 có nằm trong cùng một mạng không?",
-        options: ["Yes", "No"],
-        correct: 1
-    },
+{
+    question: "Khi R4 gặp sự cố và các link từ R4 đến R1, R3 bị giảm tốc độ (chiều ngược lại không ảnh hưởng), các LSA nào được lan truyền?",
+    hasImage: true,
+    imgSrc: "images/3.3.jpg",
+    options: [
+        "1 router-LSA",
+        "2 router-LSA",
+        "1 network-LSA",
+        "2 network-LSA"
+    ],
+    correct: 0
+},
 
-    /* ================= CLASSLESS ROUTING ================= */
+/* ================= OSPF – BACKBONE ================= */
 
-    {
-        question: "Thực hiện ping từ H1 đến H2, R1 kiểm tra thấy có thể sử dụng những luật nào trong routing table đểchuyển tiếp gói tin",
-        hasImage: true,
-        imgSrc: "images/1.3.jpg",
-        options: [
-            "192.168.0.0/16 >> R2",
-            "192.168.128.0/24 >> R2",
-            "192.168.128.100/25 >> R2",
-            "192.168.128.200/25 >> R2",
-            "192.168.128.64/26 >> R2"
-        ],
-        correct: [0, 1, 2, 4],
-        note: "Nguyên tắc longest prefix match."
-    },
+{
+    question: "Các router quảng bá OSPF cho tất cả mạng trực tiếp. Các LSA được quảng bá trong hệ thống là?",
+    hasImage: true,
+    imgSrc: "images/3.4.jpg",
+    options: [
+        "1 router-LSA",
+        "4 router-LSA",
+        "1 network-LSA",
+        "4 network-LSA"
+    ],
+    correct: [1, 2]
+},
 
-    {
-        question: "Thực hiện ping từ H1 đến H2, R1 sử dụng luật nào trong routing table để chuyển tiếp gói tin?",
-        hasImage: true,
-        imgSrc: "images/1.3.jpg",
-        options: [
-            "192.168.0.0/16 >> R2",
-            "192.168.128.0/24 >> R2",
-            "192.168.128.100/25 >> R2",
-            "192.168.128.200/25 >> R2",
-            "192.168.128.64/26 >> R2"
-        ],
-        correct: 4,
-        note: "Luật có prefix dài nhất được ưu tiên."
-    },
+/* ================= OSPF – CẤU TRÚC GÓI TIN ================= */
 
-    {
-        question: "Chạy ping từ H1 đến H2, bắt các gói tin IP trên kênh truyền từ R1 đến R2, những nhận định sau cái nào đúng",
-        hasImage: true,
-        imgSrc: "images/1.4.jpg",
-        options: [
-            "Gói tin IP có địa chỉ nguồn là 192.169.1.100 và đích là 192.168.1.10",
-            "Gói tin IP có địa chỉ mạng nguồn là 192.169.1.0/24 và mạng đích là 192.168.1.0/24",
-            "Gói tin IP có địa chỉ mạng nguồn là 192.169.1.0/24 và mạng đích là 192.168.1.0/25",
-            "Gói tin IP chứa thông tin netmask /25 để báo cho router cách lấy địa chỉ mạng"
-        ],
-        correct: 0,
-        note: "Netmask không được mang theo trong gói IP."
-    },
+{
+    question: "Trong hệ thống OSPF, router sử dụng thành phần nào trong gói tin OSPF để trao đổi thông tin trạng thái kết nối?",
+    options: [
+        "OSPF header",
+        "OSPF advertisement",
+        "Router Link State Advertisement",
+        "Network Link State Advertisement",
+        "Single Area Advertisement"
+    ],
+    correct: [2, 3]
+}
 
-    {
-        question: "Để tối ưu bảng routing tại R2, 2 luật trên có thể được gộp bằng 1 luật \"gộp\". Những luật nào sau đây có thể sử dụng làm luật \"gộp\"?",
-        hasImage: true,
-        imgSrc: "images/1.3.jpg",
-        options: [
-            "192.168.0.0/16 >> R3",
-            "192.168.128.0/24 >> R3",
-            "192.168.128.100/25 >> R3",
-            "192.168.128.200/25 >> R3"
-        ],
-        correct: [1, 0],
-        note: "Hai dải /25 liên tiếp gộp thành /24."
-    },
+];
 
-    {
-        question: "Nhận định nào sau đây là đúng?",
-        hasImage: true,
-        imgSrc: "images/1.4.jpg",
-        options: [
-            "R1 và R2 cùng vận hành routing theo cơ chế classful",
-            "R1 và R2 cùng vận hành routing theo cơ chế classless",
-            "R1 chạy classful routing, R2 chạy classless routing",
-            "R1 chạy classless routing, R2 chạy classful routing"
-        ],
-        correct: 1,
-        note: "Hệ thống sử dụng VLSM nên là classless."
-    }
-
-    ];
 
     let currentQ = 0;
     let score = 0;
