@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ CỦA BẠN --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; 
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" id="restart-btn">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+const quizData = [
+
+/* ================= ICMP REDIRECT ================= */
+
+{
+    question: "Cho sơ đồ kết nối mạng như hình (có hình ảnh). Xét tình huống ICMP Redirect xảy ra tại gateway G1. Hãy chọn các nhận định đúng.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: [
+            "Quá trình routing vòng vẫn tiếp diễn nhưng gói tin vẫn gửi đến đích",
+            "Gói tin trả lời từ Network X về Host đi qua G2 rồi vòng qua G1",
+            "Máy Host gửi gói tin đến Network X phải chuyển tiếp qua G1 vì G1 là default gateway",
+            "G1 xác định next hop là G2 vì nó được khai báo trong bảng routing của G1"
+        ],
+        correct: [0, 2, 3],
+        note: "ICMP Redirect chỉ tối ưu đường đi cho host."
+},
+
+/* ================= VPN HOST-TO-NET ================= */
+
+{
+    question: "Nhân viên của công ty X đi công tác, ngồi tại sân bay và kết nối wifi sân bay để truy nhập Internet. Máy tính cô ấy được tự động cấu hình địa chỉ IP 10.1.2.123 và Gateway 10.0.0.1. Cô ấy kết nối VPN về công ty X theo mô hình host-to-net và nhận được địa chỉ IP 192.168.1.20. Đồng nghiệp của cô ấy cũng đang đi công tác và kết nối VPN về công ty, trao đổi (chat) với nhân viên này. Trong chương trình \"chat\", đồng nghiệp \"nhìn thấy\" nhân viên đang kết nối tại địa chỉ 10.1.2.123?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "IP thật bên ngoài (trước VPN) vẫn có thể bị ứng dụng hiển thị."
+},
+
+/* ================= INTERNET GATEWAY ================= */
+
+{
+    question: "Để kết nối Internet, mạng nội bộ sử dụng một thiết bị có tên là (nhập tiếng Anh, chữ thường).",
+    options: ["router"],
+    correct: 0,
+    note: "Router là thiết bị định tuyến ra Internet."
+},
+
+/* ================= IP-IN-IP ================= */
+
+{
+    question: "Trong mô hình VPN sử dụng IP-in-IP, điều gì xảy ra khi gói tin được truyền qua tunnel?",
+    options: [
+        "Gói tin được mã hóa bằng SSL/TLS",
+        "Một header IP mới được thêm vào gói tin gốc, tạo tunnel",
+        "Sử dụng giao thức định tuyến đặc biệt",
+        "Gói tin được mã hóa ở tầng ứng dụng"
+    ],
+    correct: 1,
+    note: "IP-in-IP chỉ đóng gói, không mã hóa."
+},
+
+/* ================= PRIVATE NETWORK & ISP ================= */
+
+{
+    question: "Mạng nội bộ của một tổ chức ở Việt Nam kết nối Internet thông qua ISP bằng những phương án nào là khả thi?",
+    options: [
+        "Như một AS nối vào Internet backbone tier-1",
+        "Như một prefix của ISP, được ISP export ra backbone",
+        "Như một AS kết nối BGP với ISP",
+        "Như một mạng LAN độc lập kết nối Internet qua router"
+    ],
+    correct: [1, 2, 3],
+    note: "Doanh nghiệp thường dùng ISP export prefix hoặc chạy BGP."
+},
+
+/* ================= DHCP SECURITY ================= */
+
+{
+    question: "Cơ chế nào sau đây có thể hỗ trợ trạm làm việc tìm được đúng DHCP server khi tham gia kết nối vào mạng nội bộ để tránh nhận được các thông tin cấu hình sai (chọn các câu trả lời đúng)",
+    options: [
+        "DHCP kết hợp với hệ thống khóa công khai của người sử dụng (PKI)",
+        "IP security",
+        "DHCP server cấu hình sẵn trong trạm làm việc",
+        "danh sách máy chủ DHCP giả mạo (blacklist DHCP)",
+        "Không có cơ chế nào. DHCP được thiết kế không tính đến việc tránh giả mạo máy chủ"
+    ],
+    correct: [4],
+    note: "DHCP vốn không có cơ chế xác thực mạnh."
+},
+
+{
+    question: "Chọn các nhận định đúng về mạng nội bộ (private network).",
+    options: [
+        "Là một mạng LAN",
+        "Là một Autonomous System",
+        "Sử dụng địa chỉ IP private khi kết nối Internet",
+        "Tách rời Internet để đảm bảo an toàn",
+        "Phục vụ hoạt động nghiệp vụ nội bộ"
+    ],
+    correct: [2, 4],
+    note: "Private network dùng IP private và phục vụ nội bộ."
+},
+
+/* ================= CUSTOMER vs PROVIDER VPN ================= */
+
+{
+    question: "So sánh Customer Provision VPN và Provider Provision VPN, hãy chọn các nhận định đúng.",
+    options: [
+        "Customer Provision VPN và Provider Provision VPN đều tập trung vào việc cung cấp dịch vụ VPN cho người dùng.",
+        "Một mô hình nào đặc trưng bởi việc khách hàng tự quản lý và duy trì kết nối VPN của mình, trong khi mô hình kia là do nhà cung cấp dịch vụ quản lý. ",
+        "Customer Provision VPN thường sử dụng giao thức routing riêng, trong khi Provider Provision VPN thường sử dụng giao thức routing chuẩn.",
+        "Provider Provision VPN được xem xét là giải pháp linh hoạt hơn, trong khi Customer Provision VPN thường được chọn để tối ưu hóa hiệu suất"
+    ],
+    correct: [0, 1],
+    note: "Khác nhau chủ yếu ở trách nhiệm quản lý."
+},
+
+{
+    question: "Lựa chọn đúng hay sai: gói tin DHCPOFFER được máy chủ DHCP gửi cho client để đề xuất địa chỉ IP và các thống số liên quan như gateway, DNS serve",
+    options: ["Đúng", "Sai"],
+    correct: 0,
+    note: "IP thật bên ngoài (trước VPN) vẫn có thể bị ứng dụng hiển thị."
+},
+
+/* ================= WIFI + WEB ================= */
+
+{
+    question: "Người dùng kết nối WiFi, ping www.hust.edu.vn thành công nhưng không truy cập web được. Những nhận định nào có thể đúng?",
+    hasImage: true,
+    imgSrc: "images/6.1.jpg",
+    options: [
+        "Kết nối WIFI không thành công",
+        "Ping vào www.hust.edu.vn thấy thành công, có nghĩa là đường truyền từ máy client đến máy chủ web thông suốt",
+        "Đường truyền thông mà truy nhập trang web www.hust.edu.vn không được thì có thể dịch vụ trang web đang không hoạt động",
+        "Có thể dịch vụ DNS đang không hoạt động"
+    ],
+    correct: [1, 2],
+    note: "Ping thành công chứng tỏ IP OK, có thể lỗi web hoặc DNS."
+},
+
+/* ================= DHCP DISCOVERY ================= */
+
+{
+    question: "Khi một trạm kết nối vào mạng nội bộ, nó gửi yêu cầu đến DHCP server xin cấp địa chỉ IP. Máy chủ DHCP được xác định thế nào để nhận yêu cầu DHCP từ máy trạm??",
+    options: [
+        "Địa chỉ DHCP server được cấu hình trước trong máy trạm",
+        "Gói tin DHCP được IP broadcast đến toàn bộ hệ thống mạng nội bộ",
+        "Gói tin HDCP được broadcast ở tầng data link đến toàn bộ broadcast zone tầng 2",
+        "Gói tin HDCP được multicast đến các DHCP server theo dải địa chỉ IP multicast"
+    ],
+    correct: [2, 3],
+    note: "DHCP Discover là broadcast ở tầng 2."
+},
+
+/* ================= DHCP STATIC ================= */
+
+{
+    question: "Nhân viên của công ty X đi công tác, ngồi tại sân bay và kết nối wifi sân bay để truy nhập Internet. Máy tính cô ấy được tự động cấu hình địa chỉ IP 10.1.2.123 và Gateway 10.0.0.1. Cô ấy kết nối VPN về công ty X theo mô hình host-to-net và nhận được địa chỉ IP 192.168.1.20 với gateway 192.168.1.1. Đồng nghiệp của cô ấy cũng đang đi công tác và kết nối VPN về công ty, và đang trao đổi (chat) với nhân viên này. Chương trình chat cho phép hiện địa chỉ IP của người đang \"nói chuyện\" với mình. Hãy chọn các nhận định đúng sau đây:",
+    options: [
+        "Địa chỉ IP của người đang nói chuyện bị che bởi gateway 10.0.0.1",
+        "Địa chỉ IP của người đang nói chuyện bị che bởi gateway 192.168.1.1",
+        "Địa chỉ IP của người đang nói chuyện nằm cùng mạng với IP của mình",
+        "Địa chỉ IP của người đang nói chuyện là địa chỉ IP của \"đường hầm\" giữa hai trạm làm việc"
+    ],
+    correct: 2,
+    note: "DHCP Reservation dựa trên MAC."
+},
+
+{
+    question: "DHCP có thể cấp địa chỉ IP cố định cho máy trạm dựa trên địa chỉ MAC không?",
+    options: ["Có thể", "Không thể"],
+    correct: 0,
+    note: "DHCP Reservation dựa trên MAC."
+},
+
+/* ================= VPN SECURITY ================= */
+
+{
+    question: "Trong mô hình VPN sử dụng giải pháp đường hầm IP-in-IP, các biện pháp bảo mật thông tin nào được triển khai để đảm bảo an toàn cho dữ liệu khi đi qua kết nối đường hầm trên mạng Internet?",
+    options: [  
+        "Phương pháp chính để bảo vệ an toàn dữ liệu là sử dụng mã hóa end-to-end, với các thuật toán phức tạp như AES (Advanced Encryption Standard) trong quá trình truyền dữ liệu qua tunnel IP in-IP.",
+        "Việc sử dụng IP-in-IP trong VPN tự nó đã đảm bảo an toàn cho dữ liệu mà không cần các biện pháp bảo mật bổ sung.",
+        "VPN IP-in-IP có thể sử dụng mô hình chứng thực hai yếu tố để tăng cường lớp bảo mật, yêu cầu người dùng cung cấp cả mật khẩu và mã xác thực để truy cập vào kết nối VPN.",
+        "IP-in-IP trong VPN thường kết hợp mã hóa SSL/TLS và giao thức HMAC để đảm bảo tính toàn vẹn và xác thực của dữ liệu truyền tải qua kết nối đường hầm Internet. "
+    ],
+    correct: [3],
+    note: "IP-in-IP thường kết hợp IPsec/SSL để bảo mật."
+},
+
+/* ================= DEFAULT GATEWAY ================= */
+
+{
+    question: "Cấu hình Internet gateway và default gateway của mạng nội bộ được triển khai thế nào?",
+    options: [
+        "được qui hoạch dựa theo sơ đồ kết nối mạng nội bộ và phù hợp với kết nối ra Internet ",
+        "là một router BGP để nối mạng nội bộ với các mạng bên ngoài",
+        "được thiết lập cấu hình trên từng trạm làm việc ",
+        "có thể được thiếp lập chung cho toàn bộ trạm làm việc của mạng nội bộ thông qua dịch vụ DHCP",
+        "luôn đóng vai trò là bước nhảy đầu tiên (First-Hop Router) khi một trạm gửi gói tin IP ra Internet"
+    ],
+    correct: [0, 2, 3, 4],
+    note: "Gateway thường cấp tập trung qua DHCP."
+},
+
+/* ================= ICMP REDIRECT – NHIỀU MỤC ================= */
+
+{
+        question: "Trong thông báo ICMP Redirect, giá trị a.b.c.d là 10.0.0.1.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: ["Đúng", "Sai"],
+        correct: 1,
+        note: "a.b.c.d là địa chỉ gateway tốt hơn (G2)."
+    },
+
+    {
+        question: "Gói tin số 1 trong hình vẽ là ICMP Echo Request có địa chỉ nguồn là 10.0.0.100 và đích là 203.162.0.11.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: ["Đúng", "Sai"],
+        correct: 0
+    },
+
+    {
+        question: "Các địa chỉ IP và dữ liệu trong gói tin số 4 và gói tin số 1 là giống nhau.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: ["Đúng", "Sai"],
+        correct: 0
+    },
+
+    {
+        question: "Gói tin ICMP Echo Reply không được thể hiện trên hình vẽ.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: ["Đúng", "Sai"],
+        correct: 0
+    },
+
+    {
+        question: "ICMP Redirect thông báo đang có hiện tượng routing đi vòng. Để loại bỏ tình huống này, cần thêm mộtgateway nữa vào routing table của máy Host.",
+        hasImage: true,
+        imgSrc: "images/1.2.jpg",
+        options: ["Đúng", "Sai"],
+        imgSrc: "images/1.2.jpg",
+        correct: 0
+    },
+
+    {
+    question: "Địa chỉ máy A (máy ảo) và địa chỉ máy Host (máy thật) cùng thuộc dải IP private 192.168.1.0/24. Như vậy là cấu hình sai phải không?",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "Đúng. Cấu hình sai, cần đổi địa chỉ IP",
+        "Không phải. Hệ thống vẫn chạy với cấu hình này"
+    ],
+    correct: 1,
+    note: "NAT cho phép nhiều thiết bị dùng cùng dải private."
+},
+
+{
+    question: "Máy trạm A muốn kết nối Internet cần được khai báo gateway nào?",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "192.168.1.15",
+        "203.162.15.38",
+        "192.168.1.1",
+        "10.0.0.15"
+    ],
+    correct: 2,
+    note: "Gateway của A là router R1 (10.0.0.15)."
+},
+
+{
+    question: "Gói tin ICMP Echo Request được gửi từ lệnh ping trên máy A đến máy Google có địa chỉ nguồn và đích là",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 10.0.0.15, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.20, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.20, đích: 10.0.0.15)",
+        "(nguồn: 192.168.1.20, đích: 192.168.1.15)"
+    ],
+    correct: 1,
+    note: "Trước NAT, IP nguồn vẫn là IP của máy A."
+},
+
+{
+    question: "Gói tin ICMP Echo Request nhận được trên máy Google trong lệnh ping từ máy A có địa chỉ nguồn và đích là:",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 203.162.15.38, đích: 8.8.8.8)",
+        "(nguồn: 10.0.0.15, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.20, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.15, đích: 8.8.8.8)"
+    ],
+    correct: 0,
+    note: "NAT tại R1 thay đổi IP nguồn sang IP public."
+},
+
+{
+    question: "Gói tin ICMP Echo Request khi đi ra khỏi R1 trong lệnh ping từ máy A có địa chỉ nguồn và đích là",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 203.162.15.38, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.15, đích: 8.8.8.8)",
+        "(nguồn: 10.0.0.15, đích: 8.8.8.8)",
+        "(nguồn: 192.168.1.20, đích: 8.8.8.8)"
+    ],
+    correct: 2,
+    note: "NAT tại R1 thay đổi IP nguồn sang IP public."
+},
+
+{
+    question: "Gói tin ICMP Echo Reply gửi từ Google trong lệnh ping từ máy A khi đi đến Internet gateway có địa chỉ nguồn và đích là:",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 8.8.8.8, đích: 203.162.15.38)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.20)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)"
+    ],
+    correct: 0,
+    note: "Sau khi NAT ngược, IP đích trở lại IP private của máy A."
+},
+
+{
+    question: "Gói tin ICMP Echo Reply gửi từ Google trong lệnh ping từ máy A khi đi đến máy R1 có địa chỉ nguồn và đích là:",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 8.8.8.8, đích: 192.168.1.20)",
+        "(nguồn: 8.8.8.8, đích: 203.162.15.38)",
+        "(nguồn: 8.8.8.8, đích: 10.0.0.15)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)"
+    ],
+    correct: 2,
+    note: "Khi gói Echo Reply từ Google quay về, trước khi vào mạng nội bộ, nó đi đến router R1 với địa chỉ đích là IP public/NAT-facing của R1 (10.0.0.15 trong mô hình thực hành)."
+},
+{
+    question: "Gói tin ICMP Echo Reply gửi từ Google trong lệnh ping từ máy A khi đi đến máy A có địa chỉ nguồn và đích là:",
+    hasImage: true,
+    imgSrc: "images/6.2.jpg",
+    options: [
+        "(nguồn: 8.8.8.8, đích: 10.0.0.15)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.20)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)",
+        "(nguồn: 8.8.8.8, đích: 203.162.15.38)"
+    ],
+    correct: 1,
+    note: "Sau khi R1 thực hiện NAT ngược (DNAT), địa chỉ đích của gói Echo Reply được chuyển từ IP public của R1 về IP private của máy A (192.168.1.20)."
+},
+
+
+/* ================= VPN NET-TO-NET (IP TUNNELING) ================= */
+{
+    question: "Qui hoạch địa chỉ IP nội bộ của các gateway có thể là:",
+    hasImage: true,
+    imgSrc: "images/6.3.jpg",
+    options: [
+        "R1: 10.10.1.1/24, R2: 192.168.1.1/24",
+        "R2: 10.10.1.1/24, R1: 192.168.1.1/24",
+        "R2: 10.10.0.1/16, R1: 192.168.0.1/16",
+        "không cấu hình, để ISP cấp địa chỉ IP động"
+    ],
+    correct: [ 1, 2],
+    note: "Địa chỉ IP nội bộ của các gateway có thể sử dụng các dải private hợp lệ và không bị trùng nhau. Việc để ISP cấp IP động chỉ áp dụng cho IP phía ngoài (WAN), không áp dụng cho IP nội bộ."
+},
+
+{
+    question: "Hãy cho biết địa chỉ IP của gói tin khi trạm A nhận dữ liệu từ trạm C qua VPN",
+    hasImage: true,
+    imgSrc: "images/6.3.jpg",
+    options: [
+        "(nguồn: 203.162.0.11, đích: 210.126.15.34)",
+        "(nguồn: 192.168.1.20, đích: 10.10.1.25)",
+        "(nguồn: 10.10.1.25, đích: 192.168.1.20)",
+        "(nguồn: 210.126.15.34, đích: 203.162.0.10)"
+    ],
+    correct: 2,
+    note: "IP bên trong tunnel là IP private của 2 office."
+},
+
+{
+    question: "Hacker bên ngoài nghe lén dữ liệu A gửi cho C sẽ nhìn thấy địa chỉ IP nào?",
+    hasImage: true,
+    imgSrc: "images/6.3.jpg",
+    options: [
+        "(nguồn: 203.162.0.11, đích: 210.126.15.34)",
+        "(nguồn: 192.168.1.20, đích: 10.10.1.25)",
+        "(nguồn: 10.10.1.25, đích: 192.168.1.20)",
+        "(nguồn: 210.126.15.34, đích: 203.162.0.11)"
+    ],
+    correct: 0,
+    note: "Hacker chỉ thấy IP public của tunnel (IP-in-IP)."
+},
+
+{
+    question: "Các office cung cấp VPN host-to-net để nhân viên có thể làm việc từ xa. Các gateway R1 và R2 có thêm vai trò là Access server/VPN server và sử dụng giải pháp IP tunneling. Điều gì xảy ra khi máy X trên Internet truy nhập VPN của office #1 và kết nối đến máy C tại office #2 ??",
+    hasImage: true,
+    imgSrc: "images/6.3.jpg",
+    options: [
+        "X nhận IP 192.168.1.x khi tham gia VPN với office #1",
+        "X nhận IP 10.10.1.x khi kết nối VPN với C tại office #2",
+        "Gói tin đi vòng qua R1 và R2",
+        "Tồn tại gói tin IP nhiều lớp (IP trong IP trong IP)"
+    ],
+    correct: [0, 2, 3],
+    note: "Kết hợp host-to-net và net-to-net tạo nhiều lớp encapsulation."
+},
+
+{
+    question: "A và B chia sẻ một số thư mục và máy in trong mạng nội bộ của office #1. Máy C và D có thể truy nhập tài nguyên của A và B thông qua VPN net-to-net không?",
+    hasImage: true,
+    imgSrc: "images/6.3.jpg",
+    options: ["Có thể", "Không thể"],
+    correct: 1,
+    note: "VPN net-to-net cho phép truy cập tài nguyên nội bộ giữa các office."
+},
+
+/* ================= NAT NHIỀU HOST ================= */
+
+{
+    question: "Cùng một thời điểm, các lệnh ping trên máy A và B cùng gửi ICMP Echo request đến máy Google. Máy Google phân biệt 2 gói tin ICMP này từ A và B bằng cách nào",
+    hasImage: true,
+    imgSrc: "images/6.4.jpg",
+    options: [
+        "dựa vào địa chỉ nguồn của gói tin IP",
+        "Dựa vào đường đi qua các máy trung gian",
+        "Dựa vào địa chỉ đích của gói tin IP",
+        "Không phân biết được theo các yêu tố trên"
+    ],
+    correct: 3,
+    note: "NAT ánh xạ mỗi luồng sang IP/port khác nhau."
+},
+
+{
+    question: "Chức năng NAT đang được vận hành trên các máy nào trong hệ thống?",
+    hasImage: true,
+    imgSrc: "images/6.4.jpg",
+    options: [
+        "A và B",
+        "R1",
+        "Host",
+        "Gateway Internet",
+        "Google"
+    ],
+    correct: [3, 1, 2],
+    note: "Broadcast chỉ tồn tại trong cùng broadcast domain."
+},
+
+{
+    question: "Các máy A, B và Host có địa chỉ IP thuộc cùng dải net id là 192.168.1.0/24. Khi máy A gửi gói tin broadcast đến địa chỉ 192.168.1.255 thì các máy nào nhận được",
+    hasImage: true,
+    imgSrc: "images/6.4.jpg",
+    options: [
+        "B",
+        "R1",
+        "Host",
+        "Gateway Internet",
+        "Google"
+    ],
+    correct: [0, 1],
+    note: "Broadcast chỉ tồn tại trong cùng broadcast domain."
+},
+
+{
+    question: "Gói tin ICMP Echo Reply được gửi Google về đến máy R1 trong các lệnh ping trên máy A và B có địa chỉ nguồn và đích là",
+    hasImage: true,
+    imgSrc: "images/6.4.jpg",
+    options: [
+        "(nguồn: 8.8.8.8, đích: 192.168.1.20)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.25)",
+        "(nguồn: 8.8.8.8, đích: 10.0.0.15)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)"
+    ],
+    correct: 2,
+    note: "Host nhìn thấy IP public của NAT router."
+},
+
+{
+    question: "Gói tin ICMP Echo Reply được gửi Google về đến máy Host trong các lệnh ping trên máy A và B có địa chỉ nguồn và đích là",
+    hasImage: true,
+    imgSrc: "images/6.4.jpg",
+    options: [
+        "(nguồn: 8.8.8.8, đích: 192.168.1.25)",
+        "(nguồn: 8.8.8.8, đích: 10.0.0.15)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.20)",
+        "(nguồn: 8.8.8.8, đích: 192.168.1.15)"
+    ],
+    correct: 3,
+    note: "Host nhìn thấy IP public của NAT router."
+}
+
+];
+
+
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // --- 1. HÀM XÁO TRỘN CÂU HỎI (MỚI) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 2. HÀM KHỞI TẠO BÀI THI (MỚI) ---
+    function initQuiz() {
+        shuffleArray(quizData); // Đảo câu hỏi
+        currentQ = 0;
+        score = 0;
+        
+        // Reset giao diện
+        document.getElementById('quiz-area').classList.remove('hide');
+        document.getElementById('controls').classList.remove('hide');
+        document.getElementById('header').classList.remove('hide');
+        document.getElementById('score-area').classList.add('hide');
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb';
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // Xử lý hình ảnh
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            selectedAnswers.sort((a, b) => a - b);
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct');
+                    else allOpts[i].classList.add('missed');
+                } else {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong');
+                }
+            }
+        } else {
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // --- 3. GÁN SỰ KIỆN CHO NÚT LÀM LẠI ---
+    restartBtn.onclick = () => {
+        initQuiz();
+    };
+
+    // --- BẮT ĐẦU ---
+    initQuiz(); // Thay vì gọi loadQuestion(), ta gọi initQuiz()
+</script>
+
+</body>
+</html>

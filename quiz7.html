@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ CỦA BẠN --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; 
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" id="restart-btn">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+const quizData = [
+
+/* ================= FIREWALL + ZONE ================= */
+
+{
+    question: "Người dùng wifi (vùng 'blue') mặc dù thuộc mạng private nhưng không tin cậy. Vì vậy chỉ được phép truy nhập đến các server dịch vụ (vùng DMZ), mà không được truy nhập đến vùng local user (vùng 'green') và Internet (vùng 'red'). Các cấu hình nào sau đây cần được áp dụng?",
+    hasImage: true,
+    imgSrc: "images/7.1.jpg",
+    options: [
+        "blue => red: NAT",
+        "blue => red: Close",
+        "blue => green: Close",
+        "blue => orange: Open"
+    ],
+    correct: [1, 2],
+    note: "Wifi user không tin cậy: chỉ cho phép truy cập DMZ, chặn Internet và intranet."
+},
+
+{
+    question: "Firewall được cấu hình luật chuyển tiếp gói tin từ public Internet (vùng 'red') đến các server dịch vụ (vùng DMZ) như sau: red => orange: Closed. Use port forwarding. Các nhận định nào sau đây là đúng?",
+    hasImage: true,
+    imgSrc: "images/7.1.jpg",
+    options: [
+        "Các truy nhập từ public Internet đến Web server tại DMZ luôn bị cấm",
+        "DNS server đặt tại DMZ có thể tham gia vào hệ thống DNS toàn cầu để cung cấp địa chỉ IP của các máy thuộc mạng private",
+        "Email server đặt tại DMZ là hợp lý",
+        "Người dùng wifi và local luôn truy nhập được đến các server tại DMZ"
+    ],
+    correct: [1, 2],
+    note: "DMZ phù hợp cho DNS, Mail server; truy cập web có thể mở qua port forwarding."
+},
+
+{
+    question: "Loại firewall nào cung cấp khả năng an toàn kém hơn cho private network?",
+    options: [
+        "Application/Proxy Firewall",
+        "Packet Filtering Firewall"
+    ],
+    correct: 0,
+    note: "Packet filtering chỉ lọc theo header, không kiểm tra nội dung."
+},
+
+{
+    question: "Một gateway ở tầng ứng dụng (Application-level gateway) được coi là một proxy firewall. Đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 0,
+    note: "Application-level gateway chính là proxy firewall."
+},
+
+{
+    question: "Một firewall hoạt động ở tầng network còn được gọi là?",
+    options: [
+        "Stateful Filters",
+        "Packet Filters",
+        "Personal firewall",
+        "Area Filters"
+    ],
+    correct: 1,
+    note: "Firewall tầng network lọc gói tin theo IP/port."
+},
+
+{
+    question: "Firewall cần được cấu hình cho phép local user (vùng 'green') gửi và nhận gói tin với các server dịch vụ (vùng DMZ) và trạm Internet (vùng 'red'). Các cấu hình nào sau đây cần được áp dụng?",
+    hasImage: true,
+    imgSrc: "images/7.1.jpg",
+    options: [
+        "red => green: Open",
+        "green => red: NAT",
+        "green => orange: Open",
+        "orange => green: Open"
+    ],
+    correct: [1, 2],
+    note: "Local user được phép ra Internet (qua NAT) và truy cập DMZ; DMZ cho phép phản hồi."
+},
+
+{
+    question: "....... là một vùng trung lập trên hệ thống mạng, nằm giữa vùng tin cậy và vùng không tin cậy. Hãy điền từ thích hợp vào chỗ trống.",
+    options: [
+        "Domain",
+        "Firewall",
+        "Gateway",
+        "DMZ"
+    ],
+    correct: 3,
+    note: "DMZ là vùng đệm giữa trusted và untrusted."
+},
+
+/* ================= EMAIL SERVICE ================= */
+
+{
+    question: "Chọn các nhận định đúng sau đây về dịch vụ email?",
+    options: [
+        "Giống như dịch vụ bưu chính, email được chuyển qua nhiều server trung gian dựa theo domain người nhận",
+        "Các máy chủ chuyển tiếp email sử dụng giao thức SMTP",
+        "Mặc định, máy chủ email nhận chuyển tiếp email từ mọi người dùng",
+        "Email không được chuyển ngay đến người nhận mà lưu tại mail server của người nhận"
+    ],
+    correct: [1, 3],
+    note: "SMTP dùng để chuyển tiếp; server không open relay mặc định."
+},
+
+{
+    question: "Đâu là bản ghi cần được đăng ký tại TLD name server?",
+    options: [
+        "SOA records",
+        "A records",
+        "NS records",
+        "SRV records",
+        "CNAME records"
+    ],
+    correct: 2,
+    note: "TLD lưu thông tin NS của domain."
+},
+
+{
+    question: "Một email đính kèm tập tin chứa mã độc được gửi đến cho bạn. Nếu bạn đọc email mà chưa mở tập tin đính kèm thì máy tính của bạn còn an toàn không?",
+    options: [
+        "An toàn",
+        "Không an toàn"
+    ],
+    correct: 0,
+    note: "Chưa mở file thì mã độc chưa thực thi."
+},
+
+/* ================= DNS ================= */
+
+{
+    question: "Đâu là thông tin được định nghĩa trong SOA (Start of Authority) để báo cho secondary DNS thời điểm cần kết nối và cập nhật dữ liệu từ primary DNS?",
+    options: [
+        "Expiry",
+        "Retry",
+        "Serial",
+        "Refresh"
+    ],
+    correct: 3,
+    note: "Refresh xác định chu kỳ secondary hỏi primary."
+},
+
+{
+    question: "Kiểu bản ghi nào gắn với chức năng Reverse DNS?",
+    options: [
+        "SRV record",
+        "SPF record",
+        "AAAA record",
+        "PTR record",
+        "TXT record"
+    ],
+    correct: 3,
+    note: "PTR dùng cho reverse DNS (IP → domain)."
+},
+
+/* ================= FTP & NAT ================= */
+
+{
+    question: "Tại sao user không truy nhập được đến dịch vụ FTP trên Internet thông qua NAT Gateway?",
+    options: [
+        "Do FTP hoạt động theo cơ chế không xác định cổng",
+        "Do FTP sử dụng 2 cổng riêng rẽ cho control và data",
+        "Do chế độ Active, server chủ động kết nối data với client nằm trong private network",
+        "Do chế độ Passive, client nhận IP server trong payload FTP"
+    ],
+    correct: [2, 3],
+    note: "FTP Active gây lỗi với NAT do server kết nối ngược vào client."
+},
+
+{
+    question: "Chọn các nhận định đúng trong giao thức email",
+    options: [
+        "SMTP, POP3, IMAP, MIME là các giao thức liên quan đến dịch vụ email",
+        "POP3 và IMAP là giao thức giữa email client và email server",
+        "POP3 dùng để gửi email, IMAP dùng để nhận email",
+        "SMTP dùng để vừa nhận mail và gửi mail giữa các server"
+    ],
+    correct: [1, 3],
+    note: "FTP Active gây lỗi với NAT do server kết nối ngược vào client."
+},
+
+/* ================= DNS & EMAIL ================= */
+
+{
+    question: "Đâu là từ khóa để khai báo domain alias trong dịch vụ DNS?",
+    options: [
+        "CNAME",
+        "NS",
+        "PTR",
+        "MX"
+    ],
+    correct: 0,
+    note: "CNAME dùng để alias domain."
+},
+
+{
+    question: "Trong dịch vụ FTP, chế độ Active dùng cho client public, còn Passive dùng cho client private network. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 0,
+    note: "Passive phù hợp cho client sau NAT."
+},
+
+{
+    question: "Có thể dùng Gmail để gửi và nhận email với domain khác @gmail.com nếu Google được ủy quyền quản trị domain. Đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Google Workspace cho phép quản lý domain riêng."
+},
+
+
+/* ================= DNS CONTROL ================= */
+
+{
+    question: "Để cấm các máy trạm trong private network sử dụng DNS public (như 8.8.8.8) mà buộc phải dùng DNS nội bộ thì sử dụng phương pháp nào?",
+    options: [
+        "DHCP thiết lập tự động DNS server",
+        "Firewall cấm cổng outbound 53 cho vùng máy trạm",
+        "Firewall cấm cổng inbound 53 tới vùng máy trạm",
+        "Xử lý cấu hình DNS tại switch"
+    ],
+    correct: [1, 3],
+    note: "DHCP + firewall outbound DNS là biện pháp hiệu quả."
+},
+
+{
+    question: "Bản ghi nào trong hệ thống DNS xác định máy chủ dịch vụ Mail?",
+    options: [
+        "NS",
+        "MX",
+        "PTR",
+        "CNAME"
+    ],
+    correct: 1,
+    note: "MX chỉ định mail server."
+},
+
+{
+    question: "Biết rằng dịch vụ email hoạt động ở cổng 25. Để chặn sử dụng Gmail, firewall cần chặn cổng 25. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Gmail dùng HTTPS (443), không chỉ SMTP 25."
+},
+
+{
+    question: "Bản ghi nào trong DNS chứa thông tin ánh xạ từ domain sang địa chỉ IP?",
+    options: [
+        "NS record",
+        "HTTP Redirection record",
+        "SPF record",
+        "MX record",
+        "A record"
+    ],
+    correct: 4,
+    note: "A record ánh xạ domain → IPv4."
+}
+
+];
+
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // --- 1. HÀM XÁO TRỘN CÂU HỎI (MỚI) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 2. HÀM KHỞI TẠO BÀI THI (MỚI) ---
+    function initQuiz() {
+        shuffleArray(quizData); // Đảo câu hỏi
+        currentQ = 0;
+        score = 0;
+        
+        // Reset giao diện
+        document.getElementById('quiz-area').classList.remove('hide');
+        document.getElementById('controls').classList.remove('hide');
+        document.getElementById('header').classList.remove('hide');
+        document.getElementById('score-area').classList.add('hide');
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb';
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // Xử lý hình ảnh
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            selectedAnswers.sort((a, b) => a - b);
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct');
+                    else allOpts[i].classList.add('missed');
+                } else {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong');
+                }
+            }
+        } else {
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // --- 3. GÁN SỰ KIỆN CHO NÚT LÀM LẠI ---
+    restartBtn.onclick = () => {
+        initQuiz();
+    };
+
+    // --- BẮT ĐẦU ---
+    initQuiz(); // Thay vì gọi loadQuestion(), ta gọi initQuiz()
+</script>
+
+</body>
+</html>

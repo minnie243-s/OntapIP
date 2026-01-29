@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ CỦA BẠN --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; 
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" id="restart-btn">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+const quizData = [
+
+/* ================= MULTICAST ROUTING TABLE – (*) ================= */
+
+{
+    question: "Gói tin IP có địa chỉ nguồn 192.168.1.120 gửi đến 226.96.1.1 đi vào router tại kết nối mạng enp0s3. Điều gì sẽ xảy ra?",
+    hasImage: true,
+    imgSrc: "images/8.1.jpg",
+    options: [
+        "Gói tin multicast được router chuyển tiếp",
+        "Gói tin multicast không được router chuyển tiếp"
+    ],
+    correct: 1,
+    note: "Luật (*,G) chỉ áp dụng cho gói tin đi vào từ interface Input (enp0s8). Gói tin vào từ enp0s3 không khớp luật."
+},
+
+/* ================= OSPF & MULTICAST ADDRESS ================= */
+
+{
+    question: "Một router OSPF kết nối vào mạng backbone của một ISP. Các địa chỉ multicast nào sau đây được tự động gán cho router này?",
+    options: [
+        "224.0.0.1",
+        "224.0.0.2",
+        "224.0.0.3",
+        "224.0.0.5",
+        "224.0.0.12",
+        "224.0.0.13",
+        "224.0.0.22",
+        "224.0.0.23"
+    ],
+    correct: [0, 1, 3, 6],
+    note: "Router OSPF tham gia All-Hosts (224.0.0.1) và All-OSPF-Routers (224.0.0.5)."
+},
+
+/* ================= MULTICAST ROUTING TABLE – (S,G) ================= */
+
+{
+    question: "Gói tin IP có địa chỉ nguồn 192.168.1.125 gửi đến 226.96.1.1 đi vào router tại kết nối mạng enp0s8. Điều gì sẽ xảy ra?",
+    hasImage: true,
+    imgSrc: "images/8.2.jpg",
+    options: [
+        "Gói tin multicast được router chuyển tiếp",
+        "Gói tin multicast không được router chuyển tiếp"
+    ],
+    correct: 1,
+    note: "Luật (S,G) chỉ áp dụng cho đúng nguồn S = 192.168.1.120."
+},
+
+/* ================= WINDOWS MULTICAST ================= */
+
+{
+    question: "Lệnh sau đây trên Windows command line sẽ cho kết quả gì?\nnetsh / int ip / show joins",
+    options: [
+        "Hiển thị tất cả các địa chỉ IP multicast của máy tính",
+        "Hiển thị tất cả các địa chỉ IP multicast đã liên lạc với máy tính",
+        "Hiển thị thông tin joins trong các địa chỉ IP multicast",
+        "Hiển thị tất cả các địa chỉ IP unicast lớp 224 của máy tính"
+    ],
+    correct: 0,
+    note: "Lệnh hiển thị danh sách các multicast group mà máy đã join."
+},
+
+/* ================= MULTICAST PACKET ================= */
+
+{
+    question: "Gói tin multicast được mô tả như sau. Hãy chọn các câu mô tả đúng.",
+    options: [
+        "Là một gói tin của giao thức IP",
+        "Là một gói tin của giao thức Multicast",
+        "Có trường multicast = 1 trong gói tin",
+        "Có địa chỉ nguồn là trạm gửi",
+        "Có địa chỉ đích là các trạm nhận",
+        "Có địa chỉ đích là nhóm các trạm nhận",
+        "Có trường TTL (time to live) để tránh lỗi routing",
+        "Được xử lý tại các router, dựa trên bảng multicast routing"
+    ],
+    correct: [0, 3, 5, 6, 7],
+    note: "Multicast vẫn là IP packet, địa chỉ đích là nhóm lớp D."
+},
+
+/* ================= MULTIPLE MROUTE ENTRIES ================= */
+
+{
+    question: "Router có bảng multicast routing như sau:\n(192.168.1.120, 226.96.1.1):\nInput enp0s10 -> Output enp0s9, enp0s3\nInput enp0s9 -> Output enp0s8\nHãy chọn các nhận định đúng.",
+    hasImage: true,
+    imgSrc: "images/8.3.jpg",
+    options: [
+        "Router thực hiện nhân bản gói tin multicast từ enp0s10 sang enp0s9 và enp0s3",
+        "Router thực hiện nhân bản gói tin multicast từ enp0s10 sang enp0s9, enp0s3 và enp0s8",
+        "Router thực hiện chuyển tiếp gói tin multicast từ enp0s9 sang enp0s8",
+        "Router bị cấu hình lỗi, không xử lý được gói tin multicast (192.168.1.120, 226.96.1.1)"
+    ],
+    correct: [0, 2],
+    note: "Router nhân bản theo từng entry (S,G) tương ứng interface vào."
+},
+
+/* ================= MULTICAST CONFIG ================= */
+
+{
+    question: "Để thực hiện một phiên truyền thông multicast, cần cấu hình các địa chỉ IP. Hãy chọn các nhận định đúng.",
+    options: [
+        "Cần cấu hình địa chỉ IP multicast thay cho địa chỉ IP unicast thông thường",
+        "Sử dụng DHCP để nhận các địa chỉ IP ở máy trạm",
+        "Cấu hình tĩnh các địa chỉ IP vì multicast không làm việc được với địa chỉ IP động",
+        "Join các kết nối mạng của máy trạm vào địa chỉ nhóm"
+    ],
+    correct: [1, 3],
+    note: "IP unicast vẫn dùng bình thường; multicast chỉ là địa chỉ đích."
+},
+
+/* ================= MULTICAST APPLICATION ================= */
+
+{
+    question: "Phiên đấu giá online được thực hiện bằng giải pháp multicast giữa người điều khiển tại máy A và 3 người tham gia đấu giá tại các máy X, Y, Z. Các gói tin IP nào được gửi và nhận giữa các trạm A, X, Y, Z?",
+    options: [
+        "Gói tin IP có địa chỉ nguồn là A và địa chỉ đích là X, Y, Z",
+        "Gói tin IP có địa chỉ nguồn là X và địa chỉ đích là A",
+        "Gói tin IP có địa chỉ nguồn là A và đích là X",
+        "Gói tin IP có địa chỉ nguồn là A và địa chỉ đích là địa chỉ lớp D",
+        "Gói tin IP có địa chỉ nguồn là Y và đích là A",
+        "Gói tin IP có địa chỉ nguồn là Z và đích là X"
+    ],
+    correct: [1, 3, 4],
+    note: "Trạm phát gửi đến địa chỉ multicast lớp D."
+},
+
+/* ================= PROTO COLUMN ================= */
+
+{
+    question: "Trong bảng multicast routing của router, chữ 'S' trong cột Proto thể hiện luật được thiết lập theo cơ chế gì?",
+    hasImage: true,
+    imgSrc: "images/8.1.jpg",
+    options: [
+        "Static",
+        "Source-based",
+        "Sparse-mode",
+        "Stateful"
+    ],
+    correct: 0,
+    note: "Proto = S nghĩa là static multicast route."
+},
+
+/* ================= MULTICAST IP ASSIGN ================= */
+
+{
+    question: "Để gán địa chỉ IP multicast cho một trạm, sử dụng các phương pháp gán IP thông thường như ifconfig, ip addr, DHCP, v.v.. Đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Multicast group được join, không gán như IP unicast."
+},
+
+/* ================= JOIN & BROADCAST ================= */
+
+{
+    question: "Join và Broadcast là hai pha của một phiên truyền thông multicast. Như vậy, pha Join luôn được thực hiện trước pha Broadcast. Nhận định này đúng hay sai?",
+    options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Trạm nhận phải join group trước khi nhận dữ liệu."
+},
+
+/* ================= MULTICAST FORWARDING ================= */
+
+{
+    question: "Các router hỗ trợ xử lý gói tin IP multicast như thế nào?",
+    options: [
+        "Dựa trên routing table",
+        "Dựa trên multicast routing table",
+        "Địa chỉ nguồn được sử dụng để xác định đường chuyển tiếp gói tin",
+        "Địa chỉ đích được sử dụng để xác định đường chuyển tiếp gói tin",
+        "Địa chỉ nguồn và địa chỉ đích được sử dụng để xác định đường chuyển tiếp gói tin"
+    ],
+    correct: [1, 4],
+    note: "Multicast routing dựa trên cặp (S,G)."
+},
+
+/* ================= MULTICAST TREE SCENARIO ================= */
+
+{
+    question: "Một cây multicast địa chỉ 226.92.1.1 được thiết lập trên hệ thống:\nH1 là trạm phát, H2, H3, H4 là trạm nhận. Khi H1 ping 226.92.1.1, điều gì xảy ra?",
+    hasImage: true,
+    imgSrc: "images/8.4.jpg",
+    options: [
+        "Báo lỗi ping không nhận địa chỉ multicast",
+        "Các gói tin ping multicast được gửi đi và nhận về",
+        "Gói tin Echo Request được gói trong gói tin IP multicast và chuyển từ H1 đến R1",
+        "Các gói tin Echo Request được các router nhân bản và chuyển đến H2, H3, H4"
+    ],
+    correct: [2,3],
+    note: "Ping multicast gửi Echo Request đến nhóm."
+},
+
+{
+    question: "Điều gì xảy ra tại các trạm nhận trong phiên truyền thông khi chạy lệnh ping",
+    hasImage: true,
+    imgSrc: "images/8.4.jpg",
+    options: [
+        "Nhận được gói tin ping 226.92.1.1 và trả lời bằng một gói tin multicast gửi về trạm truyền",
+        "Nhận được gói tin ping 226.92.1.1 và trả lời bằng một gói tin multicast gửi về 226.92.1.1",
+        "Nhận được gói tin ping 226.92.1.1 và trả lời bằng một gói tin IP gửi về H1",
+        "Các gói tin trả lời được gửi từ H2, H3, H4 về H1 theo kiểu unicast"
+    ],
+    correct: [2, 3 ],
+    note: "ICMP Echo Reply luôn gửi unicast."
+},
+
+{
+    question: "Từ trạm H2 ping đến các trạm khác (H1, H3, H4). Điều gì xảy ra?",
+    hasImage: true,
+    imgSrc: "images/8.4.jpg",
+    options: [
+        "Gói tin ICMP đi theo các nhánh của cây multicast từ H2 để đến các trạm còn lại",
+        "Chỉ riêng H2 ping về trạm gốc (H1) là hoạt động theo cây multicast. H2 ping đến H3, H4 là nằm ngoài cây multicast",
+        "Tất cả các gói tin ping gửi đi từ H2 đều nằm ngoài cây multicast",
+        "Gói tin H2 gửi đến H1 trong lệnh ping và gói tin H2 trả lời H1 trong lệnh ping ở câu (a) luôn được các router chuyển tiếp theo cùng một đường đi"
+    ],
+    correct: [2, 3],
+    note: "Ping unicast không sử dụng cây multicast."
+},
+
+/* ================= TTL MULTICAST ================= */
+
+{
+    question: "Trường TTL trong gói tin IP multicast được xử lý như thế nào?",
+    options: [
+        "Giống như TTL trong IP unicast",
+        "Mỗi khi gói tin đi qua router, TTL giảm 1",
+        "Router reset TTL khi nhân bản gói tin multicast",
+        "Khi TTL = 0, router gửi ICMP Time Exceeded về gốc cây multicast"
+    ],
+    correct: [0, 1, 3],
+    note: "TTL không được reset khi nhân bản."
+}
+
+];
+
+
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // --- 1. HÀM XÁO TRỘN CÂU HỎI (MỚI) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 2. HÀM KHỞI TẠO BÀI THI (MỚI) ---
+    function initQuiz() {
+        shuffleArray(quizData); // Đảo câu hỏi
+        currentQ = 0;
+        score = 0;
+        
+        // Reset giao diện
+        document.getElementById('quiz-area').classList.remove('hide');
+        document.getElementById('controls').classList.remove('hide');
+        document.getElementById('header').classList.remove('hide');
+        document.getElementById('score-area').classList.add('hide');
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb';
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // Xử lý hình ảnh
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            selectedAnswers.sort((a, b) => a - b);
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct');
+                    else allOpts[i].classList.add('missed');
+                } else {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong');
+                }
+            }
+        } else {
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // --- 3. GÁN SỰ KIỆN CHO NÚT LÀM LẠI ---
+    restartBtn.onclick = () => {
+        initQuiz();
+    };
+
+    // --- BẮT ĐẦU ---
+    initQuiz(); // Thay vì gọi loadQuestion(), ta gọi initQuiz()
+</script>
+
+</body>
+</html>
