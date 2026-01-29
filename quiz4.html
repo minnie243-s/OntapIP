@@ -259,157 +259,307 @@
     // --- DỮ LIỆU CÂU HỎI ---
 const quizData = [
 
-/* ================= RIP – CƠ BẢN ================= */
+/* ================= PHẦN 1: OSPF MULTI AREA ================= */
 
 {
-    question: "Sử dụng môi trường giả lập mạng, bắt gói tin ICMP giữa các router trong quá trình phát hiện router láng giềng sử dụng giao thức RIPv2. Những nhận định nào sau đây là đúng?",
+    question: "Trong các LSA sau đây, LSA nào có thể chứa thông tin trạng thái kết nối mạng?",
     options: [
-        "ICMP được gửi unicast giữa các router khi trả lời trực tiếp đến một router",
-        "ICMP được gửi đến địa chỉ 224.0.0.9 khi router muốn tìm kiếm router láng giềng",
-        "ICMP được gửi broadcast giữa các router khi router muốn quảng bá sự có mặt của mình",
-        "ICMP được gửi multicast giữa các router khi router muốn tìm kiếm router láng giềng"
+        "router-LSA",
+        "network-LSA",
+        "summary-LSA",
+        "external-LSA"
     ],
-    correct: [0, 1, 3],
-    note: "RIPv2 sử dụng multicast 224.0.0.9, không dùng broadcast."
+    correct: [0, 2, 3],
+    note: "Router-LSA và Network-LSA mô tả trạng thái link trong area."
 },
 
 {
-    question: "Khi một kết nối mạng giữa hai router RIP bị đứt, các router sẽ loan báo và cập nhật bảng routing như thế nào?",
+    question: "Trong mô hình OSPF multi area, LSA nào được lan truyền để cập nhật giá (cost) của đường đi từ một đỉnh đến nút lá của đồ thị?",
     options: [
-        "Router tự động phát hiện và cập nhật bảng routing tức thời",
-        "Quản trị mạng phải cấu hình lại router để thông báo lỗi",
-        "Router tự động (sau một khoảng thời gian định kỳ) lan truyền cập nhật bảng routing và cập nhật tình trạng kết nối lỗi",
-        "Router luôn lan truyền bảng routing định kỳ kể cả khi không có lỗi"
+        "router-LSA",
+        "network-LSA",
+        "summary-LSA",
+        "external-LSA"
     ],
-    correct: [2, 3],
-    note: "RIP cập nhật định kỳ và hội tụ sau một khoảng thời gian."
-},
-
-/* ================= RIP – METRIC & RTE ================= */
-
-{
-    question: "Xét sơ đồ mạng Rx–R1–R2–R3 (có hình ảnh). Router Rx thấy có hai RTE với metric lần lượt là 4 và 5. Những nhận định nào sau đây là đúng khi các router trao đổi RTE từ router láng giềng?",
-    hasImage: true,
-    imgSrc: "images/2.1.jpg",
-    options: [
-        "R1 nhận từ R1: (prefix #1, metric: 3)",
-        "R1 nhận từ R2: (prefix #1, metric: 0)",
-        "R1 nhận từ R3: (prefix #2, metric: 0)",
-        "R1 nhận từ R2: (prefix #2, metric: 1)",
-        "Rx nhận (prefix #1, metric: 3)",
-        "Rx nhận (prefix #2, metric: 4)"  
-    ],
-    correct: [1, 3, 4, 5],
-    note: "RIP là distance vector, metric là số hop."
-},
-
-{
-    question: "Trong giao thức RIP, quá trình router xác định router láng giềng thì gói tin nào được sử dụng?",
-    options: [
-        "RIP Hello",
-        "ICMP Hello",
-        "ICMP Solicitation",
-        "ICMP Advertisement"
-    ],
-    correct: [2, 3],
-    note: "RIP sử dụng message dạng request/response (advertisement)."
-},
-
-{
-    question: "Mục tiêu của giao thức RIP là giúp router xác định tất cả các đường đi và tính khoảng cách đến mạng đích. Nhận định này đúng hay sai?",
-    options: ["Đúng", "Sai"],
-    correct: 0,
-    note: "RIP không tìm tất cả đường đi, chỉ tìm đường đi tốt nhất dựa trên metric."
-},
-
-
-/* ================= RIP – SUY LUẬN SỐ ROUTER ================= */
-
-{
-    question: "Xét hệ thống backbone R1–R–…–R2–R3 (có hình ảnh). Dựa vào metric tại các router, số lượng router R nằm giữa R1 và R2 là bao nhiêu?",
-    hasImage: true,
-    imgSrc: "images/2.2.jpg",
-    options: ["6", "7", "8", "9"],
     correct: 2,
-    note: "Hiệu metric phản ánh số router trung gian."
+    note: "Summary-LSA mang thông tin cost từ area khác."
 },
 
 {
-    question: "Xét hệ thống mạng có nhiều nhánh (có hình ảnh). Dựa trên metric trong data-plane, số router R nằm giữa R1 và R2 là bao nhiêu?",
-    hasImage: true,
-    imgSrc: "images/2.3.jpg",
-    options: ["2", "3", "4", "5"],
-    correct: 1
-},
-
-/* ================= RIP – CẤU HÌNH ================= */
-
-{
-    question: "Trong cấu hình RIP, khai báo network có những tác dụng gì?",
-    options: [
-        "Thông báo cho các router khác về một network trong hệ thống",
-        "Kết nối router vào network này",
-        "Kích hoạt (enable) kết nối mạng này để quảng bá bằng RIP",
-        "Tìm kiếm router láng giềng trên local link ứng với network"
-    ],
-    correct: [2, 3],
-    note: "Lệnh network dùng để enable RIP trên interface."
-},
-
-/* ================= CONTROL PLANE vs DATA PLANE ================= */
-
-{
-    question: "So sánh routing protocol và routed protocol: routing protocol dùng cho Control Plane, routed protocol dùng cho Data Plane. Nhận định này đúng hay sai?",
+    question: "Trong hệ thống OSPF multi area, các router luôn cập nhật đầy đủ hình trạng mạng và trạng thái các kết nối mạng vào LS Database để xây dựng bản đồ đầy đủ của toàn hệ thống. Nhận định này đúng hay sai?",
     options: ["Đúng", "Sai"],
+    correct: 1,
+    note: "Router chỉ có full topology trong area của mình."
+},
+
+{
+    question: "Biết rằng router R thuộc Area 0 đang thiết lập đường đi đến prefix N là 150 khi đi qua ABR1 và 160 khi đi qua ABR2. Area 1 có thay đổi trạng thái mạng, router-LSA và network-LSA được lan truyền trong vùng #1 đến 2 router ABR và kích hoạt summary-LSA từ 2 ABR này đến router R với thông số lần lượt là ARB1: (prefix_N, sum_N = 55) và ARB2:(prefix_N, sum_N = 65). Biết rằng cost đường đi từ R đến ABR1 là 100 và đến ABR2 là 80. Hãy cập nhật cost từ router R đến prefix N theo trạng thái mới của mạng",
+    hasImage: true,
+    imgSrc: "images/4.1.jpg",
+    options: ["140", "145", "150", "155"],
+    correct: 1,
+    note: "Cost mới = cost R→ABR1 (100) + summary cost (55) = 145."
+},
+
+{
+    question: "Trong các LSA sau đây, LSA nào chứa thông tin cho phép xây dựng đồ thị mô phỏng kết nối liên mạng (không quan tâm đến cost)?",
+    options: [
+        "router-LSA",
+        "network-LSA",
+        "summary-LSA",
+        "external-LSA"
+    ],
+    correct: 1,
+    note: "Router-LSA và Network-LSA mô tả topology."
+},
+
+{
+    question: "Cho biết trong data plane của router R đang lưu trữ cost ngắn nhất đến prefix N là 125. Area #2 xuất hiện thay đổi trạng thái mạng, router-LSA được lan truyền trong Area #2 và kích hoạt summary-LSA tại ABR để lan truyền đến router R với thông số (prefix_N, sum_N = 35). Biết rằng cost hiện tại trong data plane từ R đến ABR là 100. R sẽ cập nhật cost mới đến prefix N với giá trị bao nhiêu?",
+    hasImage: true,
+    imgSrc: "images/4.2.jpg",
+    options: ["125", "130", "135", "140"],
+    correct: 2,
+    note: "Cost mới = cost R→ABR (100) + summary cost (35) = 135."
+},
+
+{
+    question: "Lựa chọn các nhận định đúng.",
+    hasImage: true,
+    imgSrc: "images/4.3.jpg",
+    options: [
+        "ABR là router R2",
+        "R4 nhận được router-LSA từ R1",
+        "Bảng routing của R4 không có prefix thuộc Area 1",
+        "R5 nhận được summary-LSA từ R2",
+        "R1 và R4 nhận được cùng một summary-LSA từ R2"
+    ],
+    correct: [0, 3],
+    note: "Router chỉ học summary-LSA cho area khác."
+},
+
+{
+    question: "khi khởi tạo hệ thống, ABR quảng bá bao nhiêu summary-LSA vào Area 0?",
+    hasImage: true,
+    imgSrc: "images/4.4.jpg",
+    options: ["1", "2", "3", "4"],
+    correct: 2,
+    note: "Mỗi network trong area 1 tạo một summary-LSA."
+},
+
+{
+    question: "Khi trạng thái của net3 thay đổi, số summary-LSA được ABR quảng bá vào Area 0 là bao nhiêu?",
+    hasImage: true,
+    imgSrc: "images/4.4.jpg",
+    options: ["1", "2", "3"],
+    correct: 0,
+    note: "Chỉ network bị thay đổi sinh summary-LSA mới."
+},
+
+{
+    question: "Khi tốc độ kết nối của net2 tăng dần đều, số summary-LSA được quảng bá là bao nhiêu?",
+    hasImage: true,
+    imgSrc: "images/4.4.jpg",
+    options: ["1", "2", "3"],
+    correct: 1,
+    note: "Thay đổi cost làm phát sinh cập nhật summary-LSA."
+},
+
+{
+    question: "Khi tốc độ kết nối của net2 giảm dần đều, số summary-LSA được quảng bá là bao nhiêu?",
+    hasImage: true,
+    imgSrc: "images/4.4.jpg",
+    options: ["1", "2", "3"],
     correct: 0
 },
 
-/* ================= RIP – MESSAGE & METRIC ================= */
-
 {
-    question: "Xét các RIP message trong hệ thống (có hình ảnh). Giá trị metric '???' trong message RIP số 2 mà R1 nhận được là bao nhiêu?",
+    question: "Số lượng Summary-LSA được quảng bá trong Area 0 là bao nhiêu?",
     hasImage: true,
-    imgSrc: "images/2.4.jpg",
-    options: ["2", "3", "4", "5"],
+    imgSrc: "images/4.5.jpg",
+    options: ["1", "2", "3", "4"],
     correct: 1,
-    note: "Metric được cộng thêm 1 khi truyền từ router láng giềng."
+    note: "ABR quảng bá summary-LSA theo số network liên vùng."
 },
 
-/* ================= RIP – DISTANCE VECTOR ================= */
+{
+    question: "Số lượng Summary-LSA được quảng bá trong Area 1 là bao nhiêu?",
+    hasImage: true,
+    imgSrc: "images/4.5.jpg",
+    options: ["1", "2", "3", "4"],
+    correct: 1,
+    note: "ABR quảng bá summary-LSA theo số network liên vùng."
+},
 
 {
-    question: "Giao thức RIP được gọi là distance vector vì router tính đường đi bằng thuật toán Dijkstra.",
+    question: "Khi router nhận được một Summary-LSA và cập nhật vào LS Database, router có thực hiện thuật toán SPF cho các prefix ở xa (area khác) hay không?",
+    options: ["Có thực hiện", "Không thực hiện"],
+    correct: 1,
+    note: "SPF chỉ chạy đầy đủ trong area nội bộ."
+},
+
+/* ================= PHẦN 2: OSPF EXTERNAL ================= */
+
+{
+    question: "khai báo redistribute static trên R1 có những tác dụng gì?",
+    hasImage: true,
+    imgSrc: "images/4.6.jpg",
+    options: [
+        "Lan truyền External-LSA 192.168.56.0 vào OSPF",
+        "Lan truyền External-LSA 172.21.0.0 vào OSPF",
+        "lan truyền summary-LSA vào mạng 172.21.0.0",
+        "thiết lập đường đi đến prefix 192.168.56.0 trong bảng routing của R2: next hop là R1",
+        "thiết lập đường đi đến prefix 172.21.0.0/16 trong bảng routing của R2: next hop là R1"
+    ],
+    correct: [1, 4],
+    note: "Static route được đưa vào OSPF dưới dạng External-LSA."
+},
+
+{
+    question: "Khi kết nối OSPF với một hệ thống bên ngoài, router R đóng vai trò là ASBR kết nối trực tiếp với router bên ngoài là Rx. Rx quảng bá 2 prefix Net1 và Net2 đến ASBR và ASBR kích hoạt external-LSA để lan truyền thông tin các prefix này vào trong hệ thống OSPF. Xem bảng routing của các router R1, R2, R3 bên trong hệ thống OSPF, đối với prefix Net1 và Net2, next hope luôn luôn là router ASBR. Nhận định này đúng hay sai?",
+    hasImage: true,
+    imgSrc: "images/4.7.jpg",
     options: ["Đúng", "Sai"],
     correct: 1,
-    note: "RIP dùng Bellman-Ford, không phải Dijkstra."
+    note: "External-LSA chỉ định ASBR là điểm ra."
 },
 
-/* ================= RIP – CONTROL PLANE → DATA PLANE ================= */
+{
+    question: "Khai báo redistribute rip trong OSPF có những tác dụng gì?",
+    hasImage: true,
+    imgSrc: "images/4.8.jpg",
+    options: [
+        "khai báo hệ thống OSPF được kết nối với một hệ thống ngoài (external) mà hệ thống ngoài này đang sử dụng RIP",
+        "khai báo hệ thống RIP được kết nối với một hệ thống ngoài (external) mà hệ thống ngoài này đang sử dụng OSPF",
+        "lan truyền 1 external-LSA 172.x.0.0/16",
+        "lan truyền 2 external-LSA 172.x.0.0/16",
+        "lan truyền 1 external-LSA 192.168.x.0/24",
+        "lan truyền 2 external-LSA 192.168.x.0/24",
+        "lan truyền 3 external-LSA 192.168.x.0/24"
+    ],
+    correct: [0, 6],
+    note: "Redistribute chỉ theo một chiều cấu hình."
+},
 
 {
-    question: "Trong giao thức RIP, router đưa một RTE từ Control Plane sang Data Plane vào thời điểm nào?",
+    question: "R1 kết nối với Internet qua NAT Gateway và khai báo redistribute connected . Nhận định sau đây đúng hay sai?",
+    hasImage: true,
+    imgSrc: "images/4.9.jpg",
     options: [
-        "Mỗi khi router nhận được gói tin RIP",
-        "Mỗi khi router nhận được gói tin IP",
-        "Khi giá trị metric được cập nhật trong Control Plane",
-        "Khi giá trị metric được cập nhật trong Data Plane"
+        "Khai báo redistribute connected làm thay đổi bảng routing của R1",
+        "Khai báo redistribute connected không làm thay đổi bảng routing của R1"
+    ],
+    correct: 1,
+    note: "Redistribute connected không thay đổi routing local."
+},
+
+{
+    question: "dòng Destination nào được thêm vào bảng routing của R2?",
+    hasImage: true,
+    imgSrc: "images/4.10.jpg",
+    options: [
+        "10.0.2.0",
+        "172.16.100.0",
+        "192.168.1.0",
+        "0.0.0.0"
+    ],
+    correct: 0
+},
+
+{
+    question: "Khai báo redistribute connected trên R1 tạo ra bao nhiêu External-LSA?",
+    hasImage: true,
+    imgSrc: "images/4.10.jpg",
+    options: ["0", "1", "2", "3"],
+    correct: 1
+},
+
+{
+    question: "khai báo redistribute connected trên R1 có tác dụng gì?",
+    hasImage: true,
+    imgSrc: "images/4.10.jpg",
+    options: [
+        "Lan truyền External-LSA 10.0.2.0 vào OSPF",
+        "lan truyền các LSA lên kết nối mạng 10.0.2.0 của R1",
+        "thiết lập đường đi đến prefix 10.0.2.0 trong bảng routing của R2 và R3: next hop là R1",
+        "thiết lập default gateway của R2 và R3 là R1"
+    ],
+    correct: [0, 2],
+    note: "Không tự động thiết lập default gateway cho router khác."
+},
+
+{
+    question: "Với khai báo redistribute connected trên R1 cùng với kết quả các bảng routing được tạo ra trên R1 và R2 như các câu trên. Nhận định sau đây đúng hay sai?",
+    hasImage: true,
+    imgSrc: "images/4.10.jpg",
+    options: [
+        "R1 kết nối thành công ra Internet (check bằng lệnh ping 8.8.8.8 ) thì R2 cũng kết nối thành công",
+        "R1 kết nối thành công ra Internet (check bằng lệnh ping 8.8.8.8 ) nhưng R2 không kết nối thành công"
+    ],
+    correct: 1
+},
+
+/* ================= PHẦN 3: TỐI ƯU OSPF ================= */
+
+{
+    question: "Từ khóa nào dùng để khai báo một area là totally stub?",
+    options: [
+        "totally stub",
+        "stub totally",
+        "no-summary",
+        "summarize"
     ],
     correct: 2,
-    note: "Control Plane tính toán xong mới cập nhật Data Plane."
+    note: "Totally stub = stub + no-summary."
 },
 
 {
-    question: "Trong giao thức RIP, khi nhận được yêu cầu tìm kiếm router láng giềng, router trả lời bằng gói tin nào?",
+    question: "Cú pháp cấu hình area 3 là totally stub trong Quagga/FRR là gì?",
     options: [
-        "RIP Reply",
-        "ICMP Reply",
-        "ICMP Advertisement",
-        "ICMP Solicitation"
+        "area 3 no-summary",
+        "area 3 stub",
+        "area 3 stub summary",
+        "area 3 stub no-summary"
     ],
-    correct: 2
+    correct: 3
+},
+
+{
+    question: "Các area stub được sử dụng trong OSPF với mục đích gì?",
+    options: [
+        "Giảm thời gian LSA flooding",
+        "Giảm kích thước LS Database",
+        "Giảm kích thước routing table",
+        "Tất cả các ý trên"
+    ],
+    correct: 3
+},
+
+{
+    question: "Trong OSPF Stub Area, những loại LSA nào được lan truyền?",
+    options: [
+        "Type 1",
+        "Type 2",
+        "Type 3",
+        "Type 4",
+        "Type 7"
+    ],
+    correct: [0, 1, 2],
+    note: "Stub area không nhận external-LSA."
+},
+
+{
+    question: "Cú pháp cấu hình area 10 là Stub trong Quagga/FRR là gì?",
+    options: [
+        "router ospf id 1",
+        "area 10 stub",
+        "area 10 stub enable",
+        "router ospf 1"
+    ],
+    correct: 1
 }
 
 ];
+
 
     let currentQ = 0;
     let score = 0;
