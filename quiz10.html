@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ CỦA BẠN --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; 
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" id="restart-btn">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+    const quizData = [
+  {
+    question: "Mô hình IntServ có tham vọng hỗ trợ QoS theo từng dòng truyền giữa trạm nguồn và trạm đích (per-flow). Các thông số nào trong gói tin IP cho phép xác định dòng truyền này?",
+    options: [
+      "Trường ToS",
+      "Địa chỉ IP nguồn, IP đích",
+      "số hiệu cổng (port) TCP/UDP",
+      "Trường Protocol"
+    ],
+    correct: 1,
+    note: "Dòng truyền (flow) thường được xác định bởi 5 thông số (5-tuple): IP nguồn, IP đích, Port nguồn, Port đích, Protocol."
+  },
+  {
+    question: "Giao thức nào ở tầng Transport phù hợp với dịch vụ voice?",
+    options: [
+      "TCP",
+      "XNS",
+      "HTTP",
+      "UDP"
+    ],
+    correct: 3,
+    note: "UDP thường được dùng cho VoIP vì độ trễ thấp, chấp nhận mất gói tin nhỏ thay vì trễ do truyền lại như TCP."
+  },
+  {
+    question: "Mô hình QoS nào sau đây tập trung xử lý vấn đề tài nguyên mạng để cung cấp mức độ đảm bảo QoS cao nhất?",
+    options: [
+      "IntServ",
+      "Soft QoS",
+      "DiffServ",
+      "Best-effort"
+    ],
+    correct: 0,
+    note: "IntServ (Integrated Services) cung cấp đảm bảo QoS cao nhất (Hard QoS) thông qua dành riêng tài nguyên (RSVP)."
+  },
+  {
+    question: "DiffServ triển khai QoS theo các tư tưởng nào (hãy chọn các nhận định đúng)?",
+    options: [
+      "Xử lý độc lập trên từng router (gọi là PHB - Per Hop Behavior)",
+      "Dựa trên IntServ nhưng bỏ đi per-flow vì nó đòi hỏi xử lý quá nặng đối với các router",
+      "Sử dụng giao thức RSVP",
+      "Sử dụng trường ToS để phân loại các gói tin IP",
+      "Có thể hỗ trợ QoS cho từng ứng dụng trên tầng Application",
+      "Giữ lại 2 module là Classifier và Scheduler trong IntServ"
+    ],
+    correct: [0, 1, 3, 5],
+    note: "DiffServ không dùng RSVP và không xử lý per-flow mà xử lý theo lớp (class) dựa trên trường ToS/DSCP."
+  },
+  {
+    question: "Những thông tin nào được sử dụng cho module Classifier trong router?",
+    options: [
+      "Source and Destination Address",
+      "Source or Destination Port",
+      "Advertising Router",
+      "IP TTL"
+    ],
+    correct: [0, 1],
+    note: "Classifier phân loại gói tin dựa trên tiêu đề IP (IP, Port, Protocol...)."
+  },
+  {
+    question: "Mô hình toán học nào được sử dụng để cài đặt giải pháp điều khiển lưu lượng mạng?",
+    options: [
+      "RED",
+      "Token bucket",
+      "FIFO metering",
+      "Predictor or stacker"
+    ],
+    correct: 1,
+    note: "Token Bucket là thuật toán phổ biến để đo lường và kiểm soát lưu lượng (policing/shaping)."
+  },
+  {
+    question: "Đâu không phải là một QoS PHB?",
+    options: [
+      "Best Effort (BE)",
+      "Class Selector (CS)",
+      "Expedited Forwarding (EF)",
+      "Default Forwarding (DF)",
+      "Assured Forwarding (AF)"
+    ],
+    correct: 0,
+    note: "Trong ngữ cảnh câu hỏi, Best Effort thường được coi là không có cam kết QoS cụ thể (mặc dù nó là một PHB mặc định)."
+  },
+  {
+    question: "Khẳng định nào sau đây hàm ý mạng hỗ trợ QoS?",
+    options: [
+      "Dữ liệu truyền qua mạng không bị giám sát bởi một bên thứ ba.",
+      "Hệ thống mạng cần có khả năng mở rộng để đáp ứng nhu cầu của người dùng.",
+      "Hệ thống mạng cung cấp được dịch vụ theo các mức độ ổn định cho từng loại lưu lượng khác nhau.",
+      "Dữ liệu gửi qua mạng không bị thay đổi trong quá trình truyền."
+    ],
+    correct: 2,
+    note: "QoS là khả năng cung cấp mức độ dịch vụ khác nhau cho các loại lưu lượng khác nhau."
+  },
+  {
+    question: "Các tính chất nào sau đây của một dòng streaming được gọi là QoS?",
+    options: [
+      "Tốc độ trung bình 9.6Mbps",
+      "Sử dụng UDP thay cho TCP để tăng tốc độ truyền dữ liệu",
+      "Tỷ lệ mất mát gói tin (drop) là 5%",
+      "Có thể thay UDP bằng TCP để giảm tỷ lệ mất mát gói tin",
+      "Độ lệch xử lý giữa các gói tin (jitter) là 2.5ms",
+      "Số lượng gói tin được truyền là 150 gói tin"
+    ],
+    correct: [0, 2, 4],
+    note: "Các chỉ số QoS cơ bản gồm: Bandwidth (tốc độ), Packet loss (mất gói), Delay (trễ), Jitter (độ lệch trễ)."
+  },
+  {
+    question: "QoS có thể xử lý vấn đề nào?",
+    options: [
+      "Thiếu băng thông",
+      "Cuộc gọi thoại trên mạng IP (VoIP) bị rớt (dropped) khi mạng có nhiều người truy nhập",
+      "Vùng nhớ đệm (buffer) lưu trữ gói tin được gửi đến tại một kết nối mạng bị tràn",
+      "Kết nối không ổn định"
+    ],
+    correct: 1,
+    note: "QoS giúp ưu tiên lưu lượng quan trọng (như Voice) để tránh bị rớt gói khi mạng nghẽn."
+  },
+  {
+    question: "Chức năng nào sau đây của module QoS được thực hiện đầu tiên, mỗi khi router nhận được một gói tin từ một kết nối mạng?",
+    options: [
+      "Buffer Management",
+      "Congestion Management",
+      "Packet Classification",
+      "Packet Scheduling"
+    ],
+    correct: 2,
+    note: "Phân loại gói tin (Classification) phải được thực hiện trước tiên để xác định cách xử lý tiếp theo."
+  },
+  {
+    question: "Những yếu tố nào sau đây là các nguyên nhân chính tạo ra các vấn đề QoS?",
+    options: [
+      "Bad hardware",
+      "Lack of bandwidth",
+      "Latency and jitter",
+      "Copper cables",
+      "Packet loss"
+    ],
+    correct: [1, 2, 4],
+    note: "Thiếu băng thông, trễ/jitter cao và mất gói là các vấn đề chính ảnh hưởng đến chất lượng dịch vụ."
+  },
+  {
+    question: "Những bộ chỉ số nào sau đây được áp dụng cho QoS?",
+    options: [
+      "AIS, Latency, NEXT.",
+      "SNR, Delay, WRED.",
+      "Latency, WRED, Attenuation.",
+      "Jitter, Delay, Packet-loss."
+    ],
+    correct: 3,
+    note: "Jitter, Delay, Packet-loss là bộ 3 chỉ số vàng để đánh giá QoS."
+  },
+  {
+    question: "Những yếu tố thông tin nào sau đây KHÔNG được sử dụng cho QoS?",
+    options: [
+      "802.1P",
+      "MPLS EXP bits",
+      "802.1X",
+      "DSCP bits"
+    ],
+    correct: 2,
+    note: "802.1X là chuẩn xác thực (Authentication), không phải QoS. 802.1P (L2), MPLS EXP (L2.5), DSCP (L3) đều dùng cho QoS."
+  },
+  {
+    question: "Mô hình QoS nào sau đây sử dụng DSCP bits để phân loại các gói tin IP thành 64 possible nhóm dịch vụ?",
+    options: [
+      "IntServ",
+      "DiffServ",
+      "FIFO",
+      "Best-effort"
+    ],
+    correct: 1,
+    note: "DiffServ sử dụng 6 bit DSCP trong IP header, tạo ra tối đa 2^6 = 64 mức dịch vụ."
+  },
+  {
+    question: "Đâu là mô hình QoS đang được cài đặt và sử dụng phổ biến nhất?",
+    options: [
+      "IntServ",
+      "Best effort",
+      "DiffServ",
+      "RSVP"
+    ],
+    correct: 2,
+    note: "DiffServ có khả năng mở rộng tốt (scalable) nên được dùng phổ biến trong mạng lõi và Internet."
+  },
+  {
+    question: "Một hộ gia đình sử dụng gói thuê bao Internet 10Mbps nhưng bị nghẽn vào giờ cao điểm. Nhân viên tư vấn nâng lên 20Mbps. Những câu nói nào sau đây là đúng?",
+    options: [
+      "Nâng cấp gói thuê bao đảm bảo đường truyền sẽ không bao giờ bị nghẽn mạng nữa",
+      "Anh chị sử dụng tool đo tốc độ speedtest sẽ thấy tốc độ tăng lên gấp đôi",
+      "Anh chị xem phim trong mạng Việt Nam đảm bảo lúc nào cũng tốt",
+      "Anh chị xem phim trên server nằm ngoài mạng Việt Nam thì tốc độ chúng tôi không đảm bảo"
+    ],
+    correct: [1, 3],
+    note: "Nhà mạng thường chỉ cam kết tốc độ quốc tế tối thiểu hoặc không cam kết (best effort) đối với gói gia đình."
+  }
+];
+
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // --- 1. HÀM XÁO TRỘN CÂU HỎI (MỚI) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 2. HÀM KHỞI TẠO BÀI THI (MỚI) ---
+    function initQuiz() {
+        shuffleArray(quizData); // Đảo câu hỏi
+        currentQ = 0;
+        score = 0;
+        
+        // Reset giao diện
+        document.getElementById('quiz-area').classList.remove('hide');
+        document.getElementById('controls').classList.remove('hide');
+        document.getElementById('header').classList.remove('hide');
+        document.getElementById('score-area').classList.add('hide');
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb';
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // Xử lý hình ảnh
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            selectedAnswers.sort((a, b) => a - b);
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct');
+                    else allOpts[i].classList.add('missed');
+                } else {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong');
+                }
+            }
+        } else {
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // --- 3. GÁN SỰ KIỆN CHO NÚT LÀM LẠI ---
+    restartBtn.onclick = () => {
+        initQuiz();
+    };
+
+    // --- BẮT ĐẦU ---
+    initQuiz(); // Thay vì gọi loadQuestion(), ta gọi initQuiz()
+</script>
+
+</body>
+</html>

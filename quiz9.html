@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập IP (Routing - ICMP - IP)</title>
+    <style>
+        /* --- GIỮ NGUYÊN CSS CŨ CỦA BẠN --- */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --selected-bg: #eff6ff;
+            --selected-border: #2563eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .header h1 { margin: 0; font-size: 1.5rem; }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255,255,255,0.3);
+            margin-top: 1rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #fbbf24;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body { padding: 2rem; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .question-image-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none; 
+        }
+
+        .question-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-item:hover:not(.disabled) {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-item.selected {
+            border-color: var(--selected-border);
+            background-color: var(--selected-bg);
+        }
+
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            margin-right: 15px;
+            margin-top: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .type-single .indicator { border-radius: 50%; }
+        .type-single .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            box-shadow: inset 0 0 0 4px white;
+        }
+
+        .type-multi .indicator { border-radius: 4px; }
+        .type-multi .option-item.selected .indicator {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+        .type-multi .option-item.selected .indicator::after {
+            content: '✓'; font-size: 14px; font-weight: bold;
+        }
+
+        .option-item.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #15803d !important;
+        }
+        .option-item.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--error) !important;
+            color: #b91c1c !important;
+        }
+        .option-item.missed {
+            border-color: var(--success) !important;
+            border-style: dashed;
+            background-color: #f0fdf4 !important;
+        }
+        
+        .option-item.disabled { pointer-events: none; opacity: 0.9; }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f8fafc;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .hide { display: none !important; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-container { text-align: center; padding: 3rem; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; font-weight: bold; margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header" id="header">
+        <h1>Bài tập IP</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-area">
+        <div class="question-meta">
+            <span id="q-number">Câu hỏi 1</span>
+            <span id="q-type" style="color: var(--primary)">Chọn 1 đáp án</span>
+        </div>
+        
+        <div class="question-text" id="q-text">Loading...</div>
+        
+        <div class="question-image-container" id="q-img-container">
+            <img id="q-img" src="" alt="Hình minh họa">
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+        <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="score-container hide" id="score-area">
+        <div class="score-circle" id="final-score">0</div>
+        <h2>Hoàn thành bài thi!</h2>
+        <p id="score-msg">...</p>
+        <button class="btn" id="restart-btn">Làm lại</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn" id="submit-btn" disabled>Kiểm tra</button>
+        <button class="btn hide" id="next-btn">Câu tiếp theo</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+    const quizData = [
+  {
+    question: "Đại học BKHN thực hiện truyền hình trực tuyến các buổi semina từ hội trường C2 đến toàn bộ các trạm làm việc trong khuôn viên nhà trường. Phương án nào nên được sử dụng?",
+    options: [
+      "Multicast flooding với cây khung.",
+      "PIM dense mode.",
+      "PIM sparse mode.",
+      "PIM nguồn phát xác định (SSM)."
+    ],
+    correct: [0, 1],
+    note: "PIM Sparse Mode (PIM-SM) là giải pháp phù hợp và có khả năng mở rộng tốt nhất cho mạng Campus quy mô lớn."
+  },
+  {
+    question: "Trong PIM SSM (Source Specific), các router sử dụng cơ chế Reverse Path để tự động xác định các router upstream và gửi PIM Join (yêu cầu gắn cành) để xây dựng cây multicast. Giả sử hệ thống đang sử dụng một giao thức routing protocol IGP. Việc tối ưu cây multicast như vậy được diễn ra như thế nào?",
+    options: [
+      "Mở rộng OSPF để tối ưu theo trạng thái đường truyền.",
+      "Mở rộng RIP để tối ưu theo đường đi ngắn nhất từ router đến gốc cây multicast.",
+      "Tối ưu đường Reverse Path được thiết lập sẵn trong bảng unicast routing.",
+      "PIM là giao thức không phụ thuộc (IGP Protocol Independent) nên không xử lý tối ưu multicast gì với IGP như RIP hay OSPF."
+    ],
+    correct: [2,3],
+    note: "PIM thực hiện RPF (Reverse Path Forwarding) check dựa trên bảng định tuyến Unicast có sẵn để chống lặp vòng và tối ưu đường đi."
+  },
+  {
+    question: "Đâu là cơ chế chuẩn, không phụ thuộc vào nhà cung cấp thiết bị, để các router trao đổi thông tin về Rendez-Vous Point (RP)?",
+    options: [
+      "Static RP",
+      "BSR",
+      "Auto-RP",
+      "RPF"
+    ],
+    correct: 1,
+    note: "BSR (Bootstrap Router) là giao thức chuẩn (Standard). Auto-RP là giao thức độc quyền của Cisco."
+  },
+  {
+    question: "PIM-SM hoạt động dựa trên Rendez-Vous Point (RP). RP có thể được cấu hình tĩnh trên từng router, hoặc được tự động cấu hình với phương pháp Auto-RP của Cisco. Phương pháp này sử dụng một well-know multicast IP để các router liên lạc với nhau và chia sẻ thông tin RP. Địa chỉ well-know multicast IP đó là gì?",
+    options: [
+      "224.0.1.40",
+      "224.0.1.1",
+      "224.0.1.2",
+      "224.0.1.3"
+    ],
+    correct: 0,
+    note: "224.0.1.40 (Cisco-RP-Discovery) được sử dụng trong Auto-RP."
+  },
+  {
+    question: "Để cấu hình PIM-SSM (Source-Specific Multicast) và cho phép người dùng từ các miền khác nhau có thể truy cập vào một phiên truyền thông multicast trực tiếp, người quản trị cần thực hiện những hành động nào?",
+    options: [
+      "Kích hoạt IGMP trên các kết nối của router.",
+      "Kích hoạt PIM dense mode trên các router.",
+      "Kích hoạt PIM sparse mode trên các router.",
+      "Cấu hình prefix-list cho phép SSM chứa địa chỉ multicast.",
+      "Cấu hình Rendez-Vous Point (RP) cho các router."
+    ],
+    correct: [0, 2, 3],
+    note: "Triển khai PIM-SSM cần: Kích hoạt PIM-SM, IGMPv3 (hoặc mapping) và định nghĩa dải địa chỉ SSM (mặc định 232.0.0.0/8)."
+  },
+  {
+    question: "Trong khâu đầu tiên khi xây dựng cây multicast, RP đóng vai trò thay cho nguồn phát chưa được xác định. Cú pháp nào được sử dụng để mô tả cây multicast?",
+    options: [
+      "(*,S)",
+      "(*,G)",
+      "(G,S)",
+      "(S,G)"
+    ],
+    correct: 1,
+    note: "(*,G) đại diện cho Shared Tree (Cây chia sẻ) có gốc là RP. (S,G) đại diện cho Source Tree (Cây nguồn)."
+  },
+  {
+    question: "Đâu là một đặc điểm của giao thức PIM sparse mode?",
+    options: [
+      "Nó sử dụng một cơ chế 'cắt cành' (prune) khi tối ưu cây multicast...",
+      "Nó cần xác lập trước một điểm Rendez-Vous Point (RP) để đóng vai trò là gốc cây multicast khi nguồn phát chưa xác định.",
+      "Nó xây dựng cây multicast bằng cách phát tràn (flooding) các dòng multicast lên tất cả các giao diện kết nối mạng.",
+      "Nó được sử dụng trong môi trường mạng diện rộng, có mật độ trạm nhận thưa thớt."
+    ],
+    correct: [1,3],
+    note: "PIM-SM bắt buộc phải có RP để các Receiver và Source có thể tìm thấy nhau (Rendezvous)."
+  },
+  {
+    question: "Câu nào dưới đây mô tả đúng một đặc điểm của quá trình định tuyến multicast trên IP?",
+    options: [
+      "PIM hello message dùng để thiết lập quan hệ láng giềng (neighbour) giữa các router PIM.",
+      "Phương pháp tràn (flood) và tỉa cành (prune) của PIM dense mode lặp lại ba phút một lần.",
+      "PIM sparse mode xây dựng cây multicast bằng việc gửi tràn (flooding) các lưu lượng multicast trên mọi giao diện kết nối mạng.",
+      "PIM spare mode và dense mode đều yêu cầu có Rendez-Vous Point (RP)."
+    ],
+    correct: [0,1],
+    note: "Trong PIM-DM, trạng thái Prune sẽ hết hạn (timeout) sau 3 phút và traffic sẽ được flood lại."
+  },
+      // --- THUC HANH ---
+  {
+    question: "Hai chế độ nào được IGMP sử dụng để quản lý thành viên của nhóm máy multicast?",
+    options: [
+      "preclude",
+      "join",
+      "include",
+      "rendezvous",
+      "exclude",
+      "leave"
+    ],
+    correct: [2, 4],
+    note: "IGMPv3 sử dụng 2 chế độ lọc nguồn (Filter Mode) là INCLUDE và EXCLUDE."
+  },
+  {
+        question: "Chọn các nhận định đúng sau đây về cây multicast (S, G):",
+        hasImage: true,
+        imgSrc: "images/9.1.png",
+        options: [
+            "(S,G) = (192.168.1.120, 226.96.1.1)",
+            "(S,G) = (192.168.1.121, 226.96.1.1)",
+            "(S,G) = (192.168.1.120, 224.0.0.22)",
+            "(S,G) = (192.168.1.121, 224.0.0.22)"
+        ],
+        correct: [0,1],
+        note: "x"
+    },
+    {
+        question: "Chọn các nhận định đúng về cây multicast tại R1 và R2, tại thời điểm sau dòng log #4:",
+        hasImage: true,
+        imgSrc: "images/9.1.png",
+        options: [
+            "R1 và R2: đang tham gia vào cây",
+            "R1 đang tham gia vào cây, R2 không tham gia",
+            "R2 đang tham gia vào cây, R1 không tham gia",
+            "R1 và R2 đều không tham gia vào cây"
+        ],
+        correct: 1,
+        note: "x"
+    },
+    {
+        question: "Tập trung khoảng thời gian từ #11 đến #14, các nhận định nào sau đây đúng về các hoạt động của R2 đã thực hiện:",
+        hasImage: true,
+        imgSrc: "images/9.1.png",
+        options: [
+            "R2 muốn tham gia vào cây không xác định nguồn phát",
+            "R2 kết thúc tham gia vào cây không xác định nguồn phát",
+            "R2 muốn tham gia vào cây xác định nguồn phát (SSM)",
+            "R2 kết thúc tham gia vào cây xác định nguồn phát (SSM)"
+        ],
+        correct: [0,1,2,3],
+        note: "x"
+    },
+    {
+        question: "Chọn các nhận định đúng về chế độ làm việc của R1 và R2 sau thời điểm log cuối cùng",
+        hasImage: true,
+        imgSrc: "images/9.1.png",
+        options: [
+            "R1: INCLUDE {1 nguồn phát}",
+            "R1: INCLUDE {2 nguồn phát}",
+            "R2: INCLUDE {1 nguồn phát}",
+            "R2: INCLUDE {2 nguồn phát}"
+        ],
+        correct: 1,
+        note: "x"
+    },
+    {
+        question: "Đâu là hành động đúng của H2:",
+        hasImage: true,
+        imgSrc: "images/9.2.png",
+        options: [
+        "H2 --> R: igmp v3 report, 1 group record(s) [gaddr G allow { S }]",
+        "H2 --> 224.0.0.22: igmp v3 report, 1 group record(s) [gaddr G allow { S }]",
+        "H2 --> 224.0.0.22: igmp v3 report, 1 group record(s) [gaddr G to_ex {(S,G)}]",
+        "H2 --> 224.0.0.22: igmp v3 report, 1 group record(s) [gaddr G block { S }]"
+        ],
+        correct: 1,
+        note: "x"
+    },
+    {
+        question: "Phát biểu nào sau đây về IGMPv3 là đúng?",
+        hasImage: true,
+        imgSrc: "images/9.3.png",
+        options: [
+        "Nó gửi IGMP query có giá trị TTL là 1 đến nhóm các máy trạm hỗ trợ multicast (224.0.0.1).",
+
+        "Nó chấp nhận IGMP query theo kiểu nhóm xác định (specific) mà được gửi từ trạm muốn tham gia nhóm multicast lên router thượng lưu.",
+
+        "Nó cho phép một trạm gửi đến gateway (có vai trò là first hop router) một IGMP report yêu cầu nhận luồng gói tin multicast.",
+
+        "Nó được sử dụng tại cả trạm làm việc và router, để gửi các yêu cầu tham gia hoặc rời khỏi một nhóm multicast. ", 
+        ],
+        correct: [2,3],
+        note: "x"
+    },
+    {
+    question: "Đâu là cơ chế chuẩn, không phụ thuộc vào nhà cung cấp thiết bị, để các router trao đổi thông tin về Rendez-Vous Point (RP)?",
+    options: ["BSR", "Static RP", "RPF", "Auto-RP"],
+    correct: 0,
+    note: "BSR (Bootstrap Router) là cơ chế chuẩn của PIMv2, trong khi Auto-RP là cơ chế độc quyền của Cisco."
+  }
+
+
+
+];
+
+    let currentQ = 0;
+    let score = 0;
+    let selectedAnswers = null; 
+
+    const qNum = document.getElementById('q-number');
+    const qType = document.getElementById('q-type');
+    const qText = document.getElementById('q-text');
+    const imgContainer = document.getElementById('q-img-container');
+    const imgEl = document.getElementById('q-img');
+    const optionsGrid = document.getElementById('options-grid');
+    const explanationEl = document.getElementById('explanation');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // --- 1. HÀM XÁO TRỘN CÂU HỎI (MỚI) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 2. HÀM KHỞI TẠO BÀI THI (MỚI) ---
+    function initQuiz() {
+        shuffleArray(quizData); // Đảo câu hỏi
+        currentQ = 0;
+        score = 0;
+        
+        // Reset giao diện
+        document.getElementById('quiz-area').classList.remove('hide');
+        document.getElementById('controls').classList.remove('hide');
+        document.getElementById('header').classList.remove('hide');
+        document.getElementById('score-area').classList.add('hide');
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+
+        qNum.innerText = `Câu hỏi ${currentQ + 1} / ${quizData.length}`;
+        qType.innerText = isMulti ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án)';
+        qType.style.color = isMulti ? '#e11d48' : '#2563eb';
+
+        qText.innerText = q.question;
+        explanationEl.style.display = 'none';
+        
+        // Xử lý hình ảnh
+        if (q.hasImage) {
+            imgContainer.style.display = 'block';
+            if (q.imgSrc) {
+                imgEl.src = q.imgSrc;
+            } else {
+                imgEl.src = "https://via.placeholder.com/600x300?text=Chua+co+hinh+anh";
+            }
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        optionsGrid.innerHTML = '';
+        optionsGrid.className = 'options-grid ' + (isMulti ? 'type-multi' : 'type-single');
+        
+        selectedAnswers = isMulti ? [] : null;
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('hide');
+        nextBtn.classList.add('hide');
+
+        q.options.forEach((opt, idx) => {
+            const el = document.createElement('div');
+            el.className = 'option-item';
+            el.innerHTML = `<div class="indicator"></div><div>${opt}</div>`;
+            el.onclick = () => handleSelect(el, idx, isMulti);
+            optionsGrid.appendChild(el);
+        });
+
+        updateProgress();
+    }
+
+    function handleSelect(el, idx, isMulti) {
+        if (el.classList.contains('disabled')) return;
+
+        if (isMulti) {
+            el.classList.toggle('selected');
+            const pos = selectedAnswers.indexOf(idx);
+            if (pos === -1) selectedAnswers.push(idx);
+            else selectedAnswers.splice(pos, 1);
+            selectedAnswers.sort((a, b) => a - b);
+            submitBtn.disabled = selectedAnswers.length === 0;
+        } else {
+            const all = optionsGrid.children;
+            for (let child of all) child.classList.remove('selected');
+            el.classList.add('selected');
+            selectedAnswers = idx;
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.onclick = () => {
+        const q = quizData[currentQ];
+        const isMulti = Array.isArray(q.correct);
+        const allOpts = optionsGrid.children;
+        let isCorrect = false;
+
+        for (let child of allOpts) child.classList.add('disabled');
+
+        if (isMulti) {
+            const sortedCorrect = [...q.correct].sort((a, b) => a - b);
+            const sortedSelected = [...selectedAnswers].sort((a, b) => a - b);
+            isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+
+            for (let i = 0; i < allOpts.length; i++) {
+                if (q.correct.includes(i)) {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('correct');
+                    else allOpts[i].classList.add('missed');
+                } else {
+                    if (selectedAnswers.includes(i)) allOpts[i].classList.add('wrong');
+                }
+            }
+        } else {
+            isCorrect = (selectedAnswers === q.correct);
+            if (isCorrect) {
+                allOpts[selectedAnswers].classList.add('correct');
+            } else {
+                allOpts[selectedAnswers].classList.add('wrong');
+                allOpts[q.correct].classList.add('correct');
+            }
+        }
+
+        if (isCorrect) score++;
+
+        if (q.note) {
+            explanationEl.innerHTML = `<strong>Giải thích:</strong> ${q.note}`;
+            explanationEl.style.display = 'block';
+        }
+
+        submitBtn.classList.add('hide');
+        nextBtn.classList.remove('hide');
+    };
+
+    nextBtn.onclick = () => {
+        currentQ++;
+        if (currentQ < quizData.length) loadQuestion();
+        else showResult();
+    };
+
+    function updateProgress() {
+        const pct = (currentQ / quizData.length) * 100;
+        progressFill.style.width = `${pct}%`;
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').classList.add('hide');
+        document.getElementById('controls').classList.add('hide');
+        document.getElementById('header').classList.add('hide');
+        document.getElementById('score-area').classList.remove('hide');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        finalScoreEl.innerText = `${score}/${quizData.length}`;
+        
+        const pct = (score / quizData.length) * 100;
+        const circle = document.querySelector('.score-circle');
+        circle.style.background = `conic-gradient(var(--success) ${pct}%, #e2e8f0 0)`;
+
+        const msg = document.getElementById('score-msg');
+        if (pct >= 80) msg.innerText = "Xuất sắc! Bạn nắm rất vững kiến thức.";
+        else if (pct >= 50) msg.innerText = "Khá tốt! Hãy ôn lại các câu sai nhé.";
+        else msg.innerText = "Cần cố gắng thêm!";
+    }
+
+    // --- 3. GÁN SỰ KIỆN CHO NÚT LÀM LẠI ---
+    restartBtn.onclick = () => {
+        initQuiz();
+    };
+
+    // --- BẮT ĐẦU ---
+    initQuiz(); // Thay vì gọi loadQuestion(), ta gọi initQuiz()
+</script>
+
+</body>
+</html>
